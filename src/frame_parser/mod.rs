@@ -1,9 +1,11 @@
+mod ball;
 pub mod models;
 mod game_event;
 
 use crate::network::frame_parser::FrameState;
-use crate::frame_parser::models::ParsedFrameData;
+use crate::frame_parser::models::{ParsedFrameData, BallType};
 use crate::frame_parser::game_event::GameEventHandler;
+use crate::frame_parser::ball::BallHandler;
 
 pub trait ActorHandler {
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
@@ -16,7 +18,12 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         return Some(Box::new(GameEventHandler {}));
     }
     match object_name.as_ref() {
-        "" => None,
+        "Archetypes.Ball.Ball_Default" => Some(Box::new(BallHandler { ball_type: BallType::Default })),
+        "Archetypes.Ball.Ball_Basketball" => Some(Box::new(BallHandler { ball_type: BallType::Basketball })),
+        "Archetypes.Ball.Ball_BasketBall" => Some(Box::new(BallHandler { ball_type: BallType::Basketball })),
+        "Archetypes.Ball.Ball_Puck" => Some(Box::new(BallHandler { ball_type: BallType::Puck })),
+        "Archetypes.Ball.CubeBall" => Some(Box::new(BallHandler { ball_type: BallType::Cube })),
+        "Archetypes.Ball.Ball_Breakout" => Some(Box::new(BallHandler { ball_type: BallType::Breakout })),
         _ => None,
     }
 }
