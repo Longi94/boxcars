@@ -3,6 +3,7 @@ pub use self::models::*;
 
 pub mod attributes;
 mod frame_decoder;
+mod frame_parser;
 mod models;
 
 use crate::data::{object_classes, ATTRIBUTES, PARENT_CLASSES, SPAWN_STATS};
@@ -15,6 +16,7 @@ use fnv::FnvHashMap;
 use std::cmp;
 use std::collections::HashMap;
 use std::ops::Deref;
+use crate::network::frame_parser::FrameParser;
 
 pub(crate) struct CacheInfo<'a> {
     max_prop_id: u32,
@@ -40,6 +42,7 @@ impl VersionTriplet {
 pub(crate) fn parse<'a>(
     header: &Header,
     body: &ReplayBody<'a>,
+    parse_frames: bool,
 ) -> Result<NetworkFrames, NetworkError> {
     let version = VersionTriplet(
         header.major_version,
@@ -211,22 +214,38 @@ pub(crate) fn parse<'a>(
             return Err(NetworkError::TooManyFrames(frame_len));
         }
 
-        let frame_decoder = FrameDecoder {
-            frames_len: frame_len as usize,
-            product_decoder,
-            max_channels,
-            channel_bits,
-            body,
-            spawns: &spawns,
-            object_ind_attributes,
-            version,
-            is_lan,
-        };
-        Ok(NetworkFrames {
-            frames: frame_decoder.decode_frames()?,
-        })
+        if parse_frames {
+            let frame_parser = FrameParser {
+                frames_len: frame_len as usize,
+                product_decoder,
+                max_channels,
+                channel_bits,
+                body,
+                spawns: &spawns,
+                object_ind_attributes,
+                version,
+                is_lan,
+            };
+            Ok(NetworkFrames { frames: Vec::new(), parsed: frame_parser.decode_frames().ok() })
+        } else {
+            let frame_decoder = FrameDecoder {
+                frames_len: frame_len as usize,
+                product_decoder,
+                max_channels,
+                channel_bits,
+                body,
+                spawns: &spawns,
+                object_ind_attributes,
+                version,
+                is_lan,
+            };
+            Ok(NetworkFrames {
+                frames: frame_decoder.decode_frames()?,
+                parsed: None,
+            })
+        }
     } else {
-        Ok(NetworkFrames { frames: Vec::new() })
+        Ok(NetworkFrames { frames: Vec::new(), parsed: None, })
     }
 }
 

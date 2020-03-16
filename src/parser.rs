@@ -243,6 +243,7 @@ pub struct ParserBuilder<'a> {
     data: &'a [u8],
     crc_check: Option<CrcCheck>,
     network_parse: Option<NetworkParse>,
+    parse_frames: bool,
 }
 
 impl<'a> ParserBuilder<'a> {
@@ -251,6 +252,7 @@ impl<'a> ParserBuilder<'a> {
             data,
             crc_check: None,
             network_parse: None,
+            parse_frames: false
         }
     }
 
@@ -294,11 +296,17 @@ impl<'a> ParserBuilder<'a> {
         self
     }
 
+    pub fn parse_frames(mut self) -> ParserBuilder<'a> {
+        self.parse_frames = true;
+        self
+    }
+
     pub fn parse(self) -> Result<Replay, ParseError> {
         let mut parser = Parser::new(
             self.data,
             self.crc_check.unwrap_or(CrcCheck::OnError),
             self.network_parse.unwrap_or(NetworkParse::IgnoreOnError),
+            self.parse_frames,
         );
         parser.parse()
     }
@@ -325,14 +333,18 @@ pub struct Parser<'a> {
     core: CoreParser<'a>,
     crc_check: CrcCheck,
     network_parse: NetworkParse,
+    parse_frames: bool,
 }
 
 impl<'a> Parser<'a> {
-    fn new(data: &'a [u8], crc_check: CrcCheck, network_parse: NetworkParse) -> Self {
+
+    fn new(data: &'a [u8], crc_check: CrcCheck, network_parse: NetworkParse,
+           parse_frames: bool) -> Self {
         Parser {
             core: CoreParser::new(data),
             crc_check,
             network_parse,
+            parse_frames
         }
     }
 
@@ -396,7 +408,7 @@ impl<'a> Parser<'a> {
         header: &Header,
         body: &ReplayBody<'_>,
     ) -> Result<NetworkFrames, NetworkError> {
-        network::parse(header, body)
+        network::parse(header, body, self.parse_frames)
     }
 
     fn parse_header(&mut self) -> Result<Header, ParseError> {
@@ -566,6 +578,7 @@ mod tests {
             &data[0x12ca..0x12ca + 508],
             CrcCheck::Never,
             NetworkParse::Never,
+            false,
         );
         let frames = parser.parse_keyframe().unwrap();
         assert_eq!(frames.len(), 42);
@@ -580,6 +593,7 @@ mod tests {
             &data[0xf6cce..0xf6d50],
             CrcCheck::Never,
             NetworkParse::Never,
+            false,
         );
         let ticks = parser.parse_tickmarks().unwrap();
 
@@ -595,21 +609,21 @@ mod tests {
 
     #[test]
     fn test_the_parsing_empty() {
-        let mut parser = Parser::new(&[], CrcCheck::Never, NetworkParse::Never);
+        let mut parser = Parser::new(&[], CrcCheck::Never, NetworkParse::Never, false);
         assert!(parser.parse().is_err());
     }
 
     #[test]
     fn test_the_parsing_text_too_long() {
         let data = include_bytes!("../assets/replays/bad/fuzz-string-too-long.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never, false);
         assert!(parser.parse().is_err())
     }
 
     #[test]
     fn test_the_parsing_text_too_long2() {
         let data = include_bytes!("../assets/replays/bad/fuzz-string-too-long2.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always, false);
         let err = parser.parse().unwrap_err();
         assert!(format!("{}", err).contains("Unexpected size for string: -1912602609"));
     }
@@ -617,21 +631,21 @@ mod tests {
     #[test]
     fn test_fuzz_corpus_slice_index() {
         let data = include_bytes!("../assets/replays/bad/fuzz-slice-index.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never, false);
         assert!(parser.parse().is_err())
     }
 
     #[test]
     fn test_the_fuzz_corpus_abs_panic() {
         let data = include_bytes!("../assets/replays/bad/fuzz-corpus.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never, false);
         assert!(parser.parse().is_err())
     }
 
     #[test]
     fn test_the_fuzz_corpus_large_list() {
         let data = include_bytes!("../assets/replays/bad/fuzz-list-too-large.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Never, false);
         let err = parser.parse().unwrap_err();
         assert!(format!("{}", err)
             .starts_with("Could not decode replay debug info at offset (1010894): list of size"));
@@ -640,7 +654,7 @@ mod tests {
     #[test]
     fn test_the_fuzz_corpus_large_list_on_error_crc() {
         let data = include_bytes!("../assets/replays/bad/fuzz-list-too-large.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::OnError, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::OnError, NetworkParse::Never, false);
         let err = parser.parse().unwrap_err();
         assert_eq!(
             "Failed to parse body and crc check failed. Replay is corrupt",
@@ -654,7 +668,7 @@ mod tests {
     #[test]
     fn test_the_fuzz_corpus_large_list_always_crc() {
         let data = include_bytes!("../assets/replays/bad/fuzz-list-too-large.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Always, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Always, NetworkParse::Never, false);
         let err = parser.parse().unwrap_err();
         assert_eq!(
             "Crc mismatch. Expected 3765941959 but received 1314727725",
@@ -666,7 +680,7 @@ mod tests {
     #[test]
     fn test_the_fuzz_object_id_too_large() {
         let data = include_bytes!("../assets/replays/bad/fuzz-large-object-id.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always, false);
         let err = parser.parse().unwrap_err();
         assert_eq!("Object Id of 1547 exceeds range", format!("{}", err));
         assert!(err.source().is_some());
@@ -675,7 +689,7 @@ mod tests {
     #[test]
     fn test_the_fuzz_too_many_frames() {
         let data = include_bytes!("../assets/replays/bad/fuzz-too-many-frames.replay");
-        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always);
+        let mut parser = Parser::new(&data[..], CrcCheck::Never, NetworkParse::Always, false);
         let err = parser.parse().unwrap_err();
         assert_eq!("Too many frames to decode: 738197735", format!("{}", err));
         assert!(err.source().is_some());
@@ -687,7 +701,7 @@ mod tests {
 
         // Changing this byte won't make the parsing fail but will make the crc check fail
         data[4775] = 100;
-        let mut parser = Parser::new(&data[..], CrcCheck::Always, NetworkParse::Never);
+        let mut parser = Parser::new(&data[..], CrcCheck::Always, NetworkParse::Never, false);
         let res = parser.parse();
         assert!(res.is_err());
         assert_eq!(
@@ -695,7 +709,7 @@ mod tests {
             format!("{}", res.unwrap_err())
         );
 
-        parser = Parser::new(&data[..], CrcCheck::OnError, NetworkParse::Never);
+        parser = Parser::new(&data[..], CrcCheck::OnError, NetworkParse::Never, false);
         assert!(parser.parse().is_ok());
     }
 }

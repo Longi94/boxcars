@@ -372,6 +372,15 @@ impl Trajectory {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+pub struct ParsedFrameData {}
+
+impl ParsedFrameData {
+    pub fn new() -> Self {
+        ParsedFrameData {}
+    }
+}
+
 /// Oftentimes a replay contains many different objects of the same type. For instance, each rumble
 /// pickup item is of the same type but has a different name. The name of:
 /// `stadium_foggy_p.TheWorld:PersistentLevel.VehiclePickup_Boost_TA_30` should be normalized to
