@@ -6,8 +6,12 @@ use crate::network::attributes::{AttributeDecoder, ProductValueDecoder};
 use crate::network::models::{
     ActorId, Frame, NewActor, ObjectId, SpawnTrajectory, StreamId, Trajectory, UpdatedAttribute,
 };
-use crate::network::{CacheInfo, VersionTriplet, ParsedFrameData};
+use crate::network::{CacheInfo, VersionTriplet};
 use crate::parser::ReplayBody;
+use std::collections::HashMap;
+use crate::Attribute;
+use crate::frame_parser::models::ParsedFrameData;
+use crate::frame_parser::{ActorHandler, get_handler};
 
 pub(crate) struct FrameParser<'a, 'b: 'a> {
     pub frames_len: usize,
@@ -19,6 +23,7 @@ pub(crate) struct FrameParser<'a, 'b: 'a> {
     pub object_ind_attributes: FnvHashMap<ObjectId, CacheInfo<'a>>,
     pub version: VersionTriplet,
     pub is_lan: bool,
+    pub objects: &'a Vec<String>,
 }
 
 #[derive(Debug)]
@@ -198,15 +203,17 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 
     pub fn decode_frames(&self) -> Result<ParsedFrameData, NetworkError> {
         let attr_decoder = AttributeDecoder::new(self.version, self.product_decoder);
-        let mut parsed_frames: usize = 0;
-        let mut frames_data: ParsedFrameData = ParsedFrameData::new();
         let mut actors = FnvHashMap::default();
         let mut bits = BitGet::new(self.body.network_data);
         let mut new_actors = Vec::new();
         let mut updated_actors = Vec::new();
         let mut deleted_actors = Vec::new();
 
-        while !bits.is_empty() && parsed_frames < self.frames_len {
+        let mut frames_data: ParsedFrameData = ParsedFrameData::with_capacity(self.frames_len);
+        let mut state = FrameState::new();
+        let mut actors_handlers: HashMap<i32, Box<dyn ActorHandler>> = HashMap::new();
+
+        while !bits.is_empty() && state.frame < self.frames_len {
             let frame = self
                 .decode_frame(
                     &attr_decoder,
@@ -246,7 +253,66 @@ impl<'a, 'b> FrameParser<'a, 'b> {
             match frame {
                 DecodedFrame::EndFrame => break,
                 DecodedFrame::Frame(frame) => {
-                    parsed_frames += 1;
+                    state.delta = frame.delta;
+                    state.time = frame.time;
+                    frames_data.new_frame(frame.time, frame.delta);
+
+                    // Remove deleted actors
+                    for deleted in &frame.deleted_actors {
+                        actors_handlers.remove(&deleted.0);
+                        state.actors.remove(&deleted.0);
+                        state.actor_objects.remove(&deleted.0);
+                    }
+
+                    // Create new actors, get handlers if any
+                    for new_actor in &frame.new_actors {
+                        state.actors.insert(new_actor.actor_id.0, HashMap::new());
+                        let object_name = match self.objects.get(new_actor.object_id.0 as usize) {
+                            None => continue,
+                            Some(object_name) => object_name
+                        };
+                        state.actor_objects.insert(new_actor.actor_id.0, object_name.clone());
+
+                        let handler = match get_handler(object_name) {
+                            None => continue,
+                            Some(handler) => handler
+                        };
+
+                        actors_handlers.insert(new_actor.actor_id.0, handler);
+                    }
+
+                    // Update the properties of the actors
+                    for updated_actor in &frame.updated_actors {
+                        match state.actors.get_mut(&updated_actor.actor_id.0) {
+                            None => continue,
+                            Some(attributes) => {
+                                match self.objects.get(updated_actor.object_id.0 as usize) {
+                                    None => continue,
+                                    Some(object_name) => {
+                                        attributes.insert(object_name.clone(), updated_actor.attribute.clone());
+                                    }
+                                };
+                            }
+                        }
+                    }
+
+                    // Apply the update handler to each updated property
+                    for updated_actor in &frame.updated_actors {
+                        let handler = match actors_handlers.get(&updated_actor.actor_id.0) {
+                            None => continue,
+                            Some(handler) => handler
+                        };
+
+                        let object_name = match self.objects.get(updated_actor.object_id.0 as usize) {
+                            None => continue,
+                            Some(object_name) => object_name
+                        };
+
+                        handler.update(&mut frames_data, &mut state, updated_actor.actor_id.0, &object_name,
+                                       &self.objects);
+                    }
+                    
+                    state.frame += 1;
                 },
             }
         }
@@ -257,5 +323,27 @@ impl<'a, 'b> FrameParser<'a, 'b> {
         }
 
         Ok(frames_data)
+    }
+}
+
+pub struct FrameState {
+    pub time: f32,
+    pub delta: f32,
+    pub frame: usize,
+    pub actors: HashMap<i32, HashMap<String, Attribute>>,
+    pub actor_objects: HashMap<i32, String>,
+    pub car_player_map: HashMap<i32, i32>,
+}
+
+impl FrameState {
+    pub fn new() -> Self {
+        FrameState {
+            time: 0.0,
+            delta: 0.0,
+            frame: 0,
+            actors: HashMap::new(),
+            actor_objects: HashMap::new(),
+            car_player_map: HashMap::new(),
+        }
     }
 }

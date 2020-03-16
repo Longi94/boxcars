@@ -3,7 +3,7 @@ pub use self::models::*;
 
 pub mod attributes;
 mod frame_decoder;
-mod frame_parser;
+pub mod frame_parser;
 mod models;
 
 use crate::data::{object_classes, ATTRIBUTES, PARENT_CLASSES, SPAWN_STATS};
@@ -225,8 +225,10 @@ pub(crate) fn parse<'a>(
                 object_ind_attributes,
                 version,
                 is_lan,
+                objects: &body.objects,
             };
-            Ok(NetworkFrames { frames: Vec::new(), parsed: frame_parser.decode_frames().ok() })
+            let data = frame_parser.decode_frames().unwrap();
+            Ok(NetworkFrames { frames: Vec::new(), parsed: Some(data) })
         } else {
             let frame_decoder = FrameDecoder {
                 frames_len: frame_len as usize,
