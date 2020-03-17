@@ -6,6 +6,9 @@ use crate::network::frame_parser::FrameState;
 pub struct GameEventHandler {}
 
 impl ActorHandler for GameEventHandler {
+    fn create(&self, _: &mut ParsedFrameData, _: &mut FrameState, _: i32) {
+    }
+
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
               actor_id: i32, updated_attr: &String, _: &Vec<String>) {
         let attributes = match state.actors.get(&actor_id) {

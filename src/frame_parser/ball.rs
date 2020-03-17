@@ -8,12 +8,12 @@ pub struct BallHandler {
 }
 
 impl ActorHandler for BallHandler {
+    fn create(&self, data: &mut ParsedFrameData, _: &mut FrameState, _: i32) {
+        data.ball_data.ball_type = self.ball_type;
+    }
+
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _: &Vec<String>) {
-        if data.ball_data.ball_type == BallType::Unknown {
-            data.ball_data.ball_type = self.ball_type;
-        }
-
         let attributes = match state.actors.get(&actor_id) {
             None => return,
             Some(attributes) => attributes

@@ -1,10 +1,12 @@
 use crate::attributes::RigidBody;
 use std::f32::consts::PI;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
     pub frames_data: FramesData,
     pub ball_data: BallData,
+    pub player_data: HashMap<i32, PlayerData>,
 }
 
 impl ParsedFrameData {
@@ -12,12 +14,16 @@ impl ParsedFrameData {
         ParsedFrameData {
             frames_data: FramesData::with_capacity(c),
             ball_data: BallData::with_capacity(c),
+            player_data: HashMap::new(),
         }
     }
 
     pub fn new_frame(&mut self, time: f32, delta: f32) {
         self.frames_data.new_frame(time, delta);
         self.ball_data.new_frame();
+        for (_, data) in &mut self.player_data {
+            data.new_frame();
+        }
     }
 }
 
@@ -161,7 +167,7 @@ pub enum BallType {
 pub struct BallData {
     pub ball_type: BallType,
     pub rigid_body: RigidBodyFrames,
-    pub hit_team_no: Vec<Option<u8>>
+    pub hit_team_no: Vec<Option<u8>>,
 }
 
 impl BallData {
@@ -176,5 +182,36 @@ impl BallData {
     pub fn new_frame(&mut self) {
         self.rigid_body.new_frame();
         self.hit_team_no.push(self.hit_team_no.last().unwrap_or(&None).clone());
+    }
+}
+
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct PlayerData {
+    pub name: Option<String>,
+    pub team_actor: i32,
+    pub ping: Vec<Option<u8>>,
+    pub ball_cam: Vec<Option<bool>>,
+    pub time_till_power_up: Option<Vec<Option<i32>>>,
+}
+
+impl PlayerData {
+    pub fn with_capacity(c: usize) -> Self {
+        PlayerData {
+            name: None,
+            team_actor: -1,
+            ping: Vec::with_capacity(c),
+            ball_cam: Vec::with_capacity(c),
+            time_till_power_up: None,
+        }
+    }
+
+    pub fn new_frame(&mut self) {
+        self.ping.push(self.ping.last().unwrap_or(&None).clone());
+        self.ball_cam.push(self.ball_cam.last().unwrap_or(&None).clone());
+        match &mut self.time_till_power_up {
+            Some(arr) => arr.push(arr.last().unwrap_or(&None).clone()),
+            None => {}
+        }
     }
 }

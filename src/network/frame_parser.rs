@@ -212,6 +212,7 @@ impl<'a, 'b> FrameParser<'a, 'b> {
         let mut frames_data: ParsedFrameData = ParsedFrameData::with_capacity(self.frames_len);
         let mut state = FrameState::new();
         let mut actors_handlers: HashMap<i32, Box<dyn ActorHandler>> = HashMap::new();
+        state.total_frames = self.frames_len;
 
         while !bits.is_empty() && state.frame < self.frames_len {
             let frame = self
@@ -278,6 +279,7 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                             Some(handler) => handler
                         };
 
+                        handler.create(&mut frames_data, &mut state, new_actor.actor_id.0);
                         actors_handlers.insert(new_actor.actor_id.0, handler);
                     }
 
@@ -327,6 +329,7 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 }
 
 pub struct FrameState {
+    pub total_frames: usize,
     pub time: f32,
     pub delta: f32,
     pub frame: usize,
@@ -338,6 +341,7 @@ pub struct FrameState {
 impl FrameState {
     pub fn new() -> Self {
         FrameState {
+            total_frames: 0,
             time: 0.0,
             delta: 0.0,
             frame: 0,
