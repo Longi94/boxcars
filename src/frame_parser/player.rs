@@ -14,7 +14,7 @@ impl ActorHandler for PlayerHandler {
             return;
         }
         let mut player_data = PlayerData::with_capacity(state.total_frames);
-        player_data.new_frame();
+        player_data.new_frame(state.delta);
         data.player_data.insert(actor_id, player_data);
     }
 

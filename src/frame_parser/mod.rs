@@ -1,4 +1,5 @@
 mod ball;
+mod boost;
 mod camera;
 mod car;
 mod game_event;
@@ -15,6 +16,7 @@ use crate::frame_parser::player::PlayerHandler;
 use crate::frame_parser::car::CarHandler;
 use crate::frame_parser::camera::CameraSettingsHandler;
 use crate::frame_parser::jump::{JumpHandler, DoubleJumpHandler, DodgeHandler};
+use crate::frame_parser::boost::{BoostHandler, BoostPickupHandler};
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -27,6 +29,9 @@ pub trait ActorHandler {
 pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
     if object_name.starts_with("Archetypes.GameEvent.GameEvent_") {
         return Some(Box::new(GameEventHandler {}));
+    }
+    if object_name.contains("TheWorld:PersistentLevel.VehiclePickup_Boost_TA") {
+        return Some(Box::new(BoostPickupHandler {}));
     }
     match object_name.as_ref() {
         "Archetypes.Ball.Ball_Default" => Some(Box::new(BallHandler { ball_type: BallType::Default })),
@@ -41,6 +46,7 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         "Archetypes.CarComponents.CarComponent_Jump" => Some(Box::new(JumpHandler {})),
         "Archetypes.CarComponents.CarComponent_DoubleJump" => Some(Box::new(DoubleJumpHandler {})),
         "Archetypes.CarComponents.CarComponent_Dodge" => Some(Box::new(DodgeHandler {})),
+        "Archetypes.CarComponents.CarComponent_Boost" => Some(Box::new(BoostHandler {})),
         _ => None,
     }
 }

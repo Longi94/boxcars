@@ -2,6 +2,7 @@ use crate::attributes::RigidBody;
 use std::f32::consts::PI;
 use std::collections::{HashMap, HashSet};
 use crate::CamSettings;
+use crate::frame_parser::boost::BOOST_PER_SECOND;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
@@ -9,7 +10,7 @@ pub struct ParsedFrameData {
     pub ball_data: BallData,
     pub player_data: HashMap<i32, PlayerData>,
     pub parties: HashMap<String, HashSet<String>>,
-    pub demos: Vec<Demolition>
+    pub demos: Vec<Demolition>,
 }
 
 impl ParsedFrameData {
@@ -27,7 +28,7 @@ impl ParsedFrameData {
         self.frames_data.new_frame(time, delta);
         self.ball_data.new_frame();
         for (_, data) in &mut self.player_data {
-            data.new_frame();
+            data.new_frame(delta);
         }
     }
 }
@@ -215,6 +216,9 @@ pub struct PlayerData {
     pub jump_active: Vec<Option<u8>>,
     pub double_jump_active: Vec<Option<u8>>,
     pub dodge_active: Vec<Option<u8>>,
+    pub boost_active: Vec<Option<u8>>,
+    pub boost: Vec<Option<f32>>,
+    pub boost_collect: Vec<bool>,
 }
 
 impl PlayerData {
@@ -233,6 +237,9 @@ impl PlayerData {
             jump_active: Vec::with_capacity(c),
             double_jump_active: Vec::with_capacity(c),
             dodge_active: Vec::with_capacity(c),
+            boost_active: Vec::with_capacity(c),
+            boost: Vec::with_capacity(c),
+            boost_collect: Vec::with_capacity(c),
             primary_color: None,
             accent_color: None,
             primary_finish: None,
@@ -241,7 +248,7 @@ impl PlayerData {
         }
     }
 
-    pub fn new_frame(&mut self) {
+    pub fn new_frame(&mut self, delta: f32) {
         self.ping.push(self.ping.last().unwrap_or(&None).clone());
         self.ball_cam.push(self.ball_cam.last().unwrap_or(&None).clone());
         self.throttle.push(self.throttle.last().unwrap_or(&None).clone());
@@ -250,6 +257,15 @@ impl PlayerData {
         self.jump_active.push(self.jump_active.last().unwrap_or(&None).clone());
         self.double_jump_active.push(self.double_jump_active.last().unwrap_or(&None).clone());
         self.dodge_active.push(self.dodge_active.last().unwrap_or(&None).clone());
+        self.boost_active.push(self.boost_active.last().unwrap_or(&None).clone());
+
+        if self.boost_active.last().unwrap_or(&None).unwrap_or(0) % 2 == 1 {
+            self.boost.push(Some((self.boost.last().unwrap_or(&None).unwrap_or(0.0) -
+                delta * BOOST_PER_SECOND).max(0.0)));
+        } else {
+            self.boost.push(self.boost.last().unwrap_or(&None).clone());
+        }
+        self.boost_collect.push(false);
         match &mut self.time_till_power_up {
             Some(arr) => arr.push(arr.last().unwrap_or(&None).clone()),
             None => {}

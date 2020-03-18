@@ -2,6 +2,7 @@ use crate::frame_parser::ActorHandler;
 use crate::frame_parser::models::ParsedFrameData;
 use crate::network::frame_parser::FrameState;
 use crate::Attribute;
+use crate::frame_parser::utils::get_cars_player_actor_id;
 
 pub struct JumpHandler {}
 
@@ -15,17 +16,9 @@ impl ActorHandler for JumpHandler {
             _ => return,
         };
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        let player_actor_id = match state.actors.get(&car_actor_id) {
-            Some(attributes) => match attributes.get("Engine.Pawn:PlayerReplicationInfo") {
-                Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-                _ => return,
-            },
-            _ => return,
+        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
+            Some(id) => id,
+            _ => return
         };
 
         let player_data = match data.player_data.get_mut(&player_actor_id) {
@@ -58,17 +51,9 @@ impl ActorHandler for DoubleJumpHandler {
             _ => return,
         };
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        let player_actor_id = match state.actors.get(&car_actor_id) {
-            Some(attributes) => match attributes.get("Engine.Pawn:PlayerReplicationInfo") {
-                Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-                _ => return,
-            },
-            _ => return,
+        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
+            Some(id) => id,
+            _ => return
         };
 
         let player_data = match data.player_data.get_mut(&player_actor_id) {
@@ -101,17 +86,9 @@ impl ActorHandler for DodgeHandler {
             _ => return,
         };
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        let player_actor_id = match state.actors.get(&car_actor_id) {
-            Some(attributes) => match attributes.get("Engine.Pawn:PlayerReplicationInfo") {
-                Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-                _ => return,
-            },
-            _ => return,
+        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
+            Some(id) => id,
+            _ => return
         };
 
         let player_data = match data.player_data.get_mut(&player_actor_id) {
