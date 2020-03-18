@@ -1,5 +1,5 @@
 use crate::frame_parser::ActorHandler;
-use crate::frame_parser::models::ParsedFrameData;
+use crate::frame_parser::models::{ParsedFrameData, Paints};
 use crate::network::frame_parser::FrameState;
 use crate::frame_parser::models::PlayerData;
 use crate::{Attribute, Product};
@@ -99,31 +99,31 @@ impl ActorHandler for PlayerHandler {
             }
             "TAGame.PRI_TA:MatchScore" => {
                 match attributes.get("TAGame.PRI_TA:MatchScore") {
-                    Some(Attribute::Int(score)) => player_data.match_score = Some(score.clone()),
+                    Some(Attribute::Int(score)) => player_data.match_score = score.clone(),
                     _ => return,
                 }
             }
             "TAGame.PRI_TA:MatchGoals" => {
                 match attributes.get("TAGame.PRI_TA:MatchGoals") {
-                    Some(Attribute::Int(goals)) => player_data.goals = Some(goals.clone()),
+                    Some(Attribute::Int(goals)) => player_data.goals = goals.clone(),
                     _ => return,
                 }
             }
             "TAGame.PRI_TA:MatchAssists" => {
                 match attributes.get("TAGame.PRI_TA:MatchAssists") {
-                    Some(Attribute::Int(assists)) => player_data.assists = Some(assists.clone()),
+                    Some(Attribute::Int(assists)) => player_data.assists = assists.clone(),
                     _ => return,
                 }
             }
             "TAGame.PRI_TA:MatchSaves" => {
                 match attributes.get("TAGame.PRI_TA:MatchSaves") {
-                    Some(Attribute::Int(saves)) => player_data.saves = Some(saves.clone()),
+                    Some(Attribute::Int(saves)) => player_data.saves = saves.clone(),
                     _ => return,
                 }
             }
             "TAGame.PRI_TA:MatchShots" => {
                 match attributes.get("TAGame.PRI_TA:MatchShots") {
-                    Some(Attribute::Int(shots)) => player_data.shots = Some(shots.clone()),
+                    Some(Attribute::Int(shots)) => player_data.shots = shots.clone(),
                     _ => return,
                 }
             }
@@ -153,28 +153,15 @@ impl ActorHandler for PlayerHandler {
             }
             "TAGame.PRI_TA:ClientLoadout" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadout") {
-                    Some(Attribute::Loadout(loadout)) => player_data.loadout = loadout.deref().clone(),
+                    Some(Attribute::Loadout(loadout)) => player_data.loadout.blue = loadout.deref().clone(),
                     _ => return,
                 }
             }
             "TAGame.PRI_TA:ClientLoadouts" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadouts") {
                     Some(Attribute::TeamLoadout(loadouts)) => {
-                        let team_actor_id = match attributes.get("Engine.PlayerReplicationInfo:Team") {
-                            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-                            _ => return,
-                        };
-
-                        let is_orange = match state.actor_objects.get(&team_actor_id) {
-                            Some(object_name) => object_name.ends_with("1"),
-                            _ => return,
-                        };
-
-                        if is_orange {
-                            player_data.loadout = loadouts.orange.clone();
-                        } else {
-                            player_data.loadout = loadouts.blue.clone();
-                        }
+                        player_data.loadout.orange = Some(loadouts.orange.clone());
+                        player_data.loadout.blue = loadouts.blue.clone();
                     }
                     _ => return,
                 }
@@ -182,16 +169,7 @@ impl ActorHandler for PlayerHandler {
             "TAGame.PRI_TA:ClientLoadoutOnline" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadoutOnline") {
                     Some(Attribute::LoadoutOnline(paints)) => {
-                        player_data.loadout_paints.body = get_paint_value(&paints[0], objects);
-                        player_data.loadout_paints.decal = get_paint_value(&paints[1], objects);
-                        player_data.loadout_paints.wheels = get_paint_value(&paints[2], objects);
-                        player_data.loadout_paints.boost = get_paint_value(&paints[3], objects);
-                        player_data.loadout_paints.antenna = get_paint_value(&paints[4], objects);
-                        player_data.loadout_paints.topper = get_paint_value(&paints[5], objects);
-                        player_data.loadout_paints.trail = get_paint_value(&paints[14], objects);
-                        player_data.loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
-                        player_data.loadout_paints.banner = get_paint_value(&paints[16], objects);
-                        player_data.loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
+                        set_paint_values(&mut player_data.loadout_paints.blue, &paints, objects);
                     }
                     _ => return,
                 }
@@ -199,33 +177,10 @@ impl ActorHandler for PlayerHandler {
             "TAGame.PRI_TA:ClientLoadoutsOnline" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadoutsOnline") {
                     Some(Attribute::LoadoutsOnline(team_paints)) => {
-                        let team_actor_id = match attributes.get("Engine.PlayerReplicationInfo:Team") {
-                            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-                            _ => return,
-                        };
-
-                        let paints = match state.actor_objects.get(&team_actor_id) {
-                            Some(object_name) => {
-                                let is_orange = object_name.ends_with("1");
-                                if is_orange {
-                                    team_paints.orange.clone()
-                                } else {
-                                    team_paints.blue.clone()
-                                }
-                            },
-                            _ => return,
-                        };
-
-                        player_data.loadout_paints.body = get_paint_value(&paints[0], objects);
-                        player_data.loadout_paints.decal = get_paint_value(&paints[1], objects);
-                        player_data.loadout_paints.wheels = get_paint_value(&paints[2], objects);
-                        player_data.loadout_paints.boost = get_paint_value(&paints[3], objects);
-                        player_data.loadout_paints.antenna = get_paint_value(&paints[4], objects);
-                        player_data.loadout_paints.topper = get_paint_value(&paints[5], objects);
-                        player_data.loadout_paints.trail = get_paint_value(&paints[14], objects);
-                        player_data.loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
-                        player_data.loadout_paints.banner = get_paint_value(&paints[16], objects);
-                        player_data.loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
+                        set_paint_values(&mut player_data.loadout_paints.blue, &team_paints.blue, objects);
+                        let mut orange_paints = Paints::new();
+                        set_paint_values(&mut orange_paints, &team_paints.blue, objects);
+                        player_data.loadout_paints.orange = Some(orange_paints);
                     }
                     _ => return,
                 }
@@ -268,6 +223,18 @@ impl ActorHandler for PlayerHandler {
     }
 }
 
+fn set_paint_values(loadout_paints: &mut Paints, paints: &Vec<Vec<Product>>, objects: &Vec<String>) {
+    loadout_paints.body = get_paint_value(&paints[0], objects);
+    loadout_paints.decal = get_paint_value(&paints[1], objects);
+    loadout_paints.wheels = get_paint_value(&paints[2], objects);
+    loadout_paints.boost = get_paint_value(&paints[3], objects);
+    loadout_paints.antenna = get_paint_value(&paints[4], objects);
+    loadout_paints.topper = get_paint_value(&paints[5], objects);
+    loadout_paints.trail = get_paint_value(&paints[14], objects);
+    loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
+    loadout_paints.banner = get_paint_value(&paints[16], objects);
+    loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
+}
 
 fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> u32 {
     for attr in attributes {

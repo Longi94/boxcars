@@ -296,11 +296,11 @@ pub struct PlayerData {
     pub name: Option<String>,
     pub is_bot: bool,
     pub team_actor: i32,
-    pub match_score: Option<i32>,
-    pub goals: Option<i32>,
-    pub assists: Option<i32>,
-    pub saves: Option<i32>,
-    pub shots: Option<i32>,
+    pub match_score: i32,
+    pub goals: i32,
+    pub assists: i32,
+    pub saves: i32,
+    pub shots: i32,
     pub party_leader: Option<String>,
     pub title: Option<i32>,
     pub total_xp: Option<i32>,
@@ -323,7 +323,7 @@ pub struct PlayerData {
     pub boost_active: Vec<Option<u8>>,
     pub boost: Vec<Option<f32>>,
     pub boost_collect: Vec<bool>,
-    pub loadout: Loadout,
+    pub loadout: Loadouts,
     pub loadout_paints: LoadoutPaints,
     pub power_up_active: Vec<Option<bool>>,
     pub power_up: Vec<Option<String>>,
@@ -336,11 +336,11 @@ impl PlayerData {
             name: None,
             is_bot: false,
             team_actor: -1,
-            match_score: None,
-            goals: None,
-            assists: None,
-            saves: None,
-            shots: None,
+            match_score: 0,
+            goals: 0,
+            assists: 0,
+            saves: 0,
+            shots: 0,
             party_leader: None,
             title: None,
             total_xp: None,
@@ -360,22 +360,7 @@ impl PlayerData {
             boost_collect: Vec::with_capacity(c),
             power_up_active: Vec::with_capacity(c),
             power_up: Vec::with_capacity(c),
-            loadout: Loadout {
-                version: 0,
-                body: 23,
-                decal: 0,
-                wheels: 376,
-                rocket_trail: 0,
-                antenna: 0,
-                topper: 0,
-                unknown1: 0,
-                unknown2: None,
-                engine_audio: None,
-                trail: None,
-                goal_explosion: None,
-                banner: None,
-                unknown3: None,
-            },
+            loadout: Loadouts::new(),
             loadout_paints: LoadoutPaints::new(),
             primary_color: None,
             accent_color: None,
@@ -441,7 +426,52 @@ pub struct Demolition {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Loadouts {
+    pub blue: Loadout,
+    pub orange: Option<Loadout>,
+}
+
+impl Loadouts {
+    pub fn new() -> Self {
+        Loadouts {
+            blue: Loadout {
+                version: 0,
+                body: 23,
+                decal: 0,
+                wheels: 376,
+                rocket_trail: 0,
+                antenna: 0,
+                topper: 0,
+                unknown1: 0,
+                unknown2: None,
+                engine_audio: None,
+                trail: None,
+                goal_explosion: None,
+                banner: None,
+                unknown3: None,
+            },
+            orange: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct LoadoutPaints {
+    pub blue: Paints,
+    pub orange: Option<Paints>,
+}
+
+impl LoadoutPaints {
+    pub fn new() -> Self {
+        LoadoutPaints {
+            blue: Paints::new(),
+            orange: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Paints {
     pub body: u32,
     pub decal: u32,
     pub wheels: u32,
@@ -454,9 +484,9 @@ pub struct LoadoutPaints {
     pub avatar_border: u32,
 }
 
-impl LoadoutPaints {
+impl Paints {
     pub fn new() -> Self {
-        LoadoutPaints {
+        Paints {
             body: 0,
             decal: 0,
             wheels: 0,
