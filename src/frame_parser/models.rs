@@ -303,6 +303,8 @@ pub struct PlayerData {
     pub boost_collect: Vec<bool>,
     pub loadout: Loadout,
     pub loadout_paints: LoadoutPaints,
+    pub power_up_active: Vec<Option<bool>>,
+    pub power_up: Vec<Option<String>>,
 }
 
 impl PlayerData {
@@ -329,6 +331,8 @@ impl PlayerData {
             boost_active: Vec::with_capacity(c),
             boost: Vec::with_capacity(c),
             boost_collect: Vec::with_capacity(c),
+            power_up_active: Vec::with_capacity(c),
+            power_up: Vec::with_capacity(c),
             loadout: Loadout {
                 version: 0,
                 body: 23,
@@ -364,6 +368,8 @@ impl PlayerData {
         data.boost_active.resize(c, None);
         data.boost.resize(c, None);
         data.boost_collect.resize(c, false);
+        data.power_up_active.resize(c, None);
+        data.power_up.resize(c, None);
 
         data
     }
@@ -379,6 +385,8 @@ impl PlayerData {
             self.double_jump_active[frame] = self.double_jump_active[frame - 1].clone();
             self.dodge_active[frame] = self.dodge_active[frame - 1].clone();
             self.boost_active[frame] = self.boost_active[frame - 1].clone();
+            self.power_up_active[frame] = self.power_up_active[frame - 1].clone();
+            self.power_up[frame] = self.power_up[frame - 1].clone();
 
             if self.boost_active[frame - 1].unwrap_or(0) % 2 == 1 {
                 self.boost[frame] = Some((self.boost[frame - 1].unwrap_or(0.0) -

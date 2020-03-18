@@ -52,6 +52,9 @@ impl ActorHandler for BoostHandler {
             _ => return,
         }
     }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    }
 }
 
 pub struct BoostPickupHandler {}
@@ -115,5 +118,8 @@ impl ActorHandler for BoostPickupHandler {
         if prev_boost.is_some() && current_boost.is_some() && prev_boost.unwrap() < 255.0 && current_boost.unwrap() > prev_boost.unwrap() {
             player_data.boost_collect[state.frame] = true;
         }
+    }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
     }
 }

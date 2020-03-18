@@ -32,4 +32,7 @@ impl ActorHandler for BallHandler {
             _ => return
         }
     }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    }
 }

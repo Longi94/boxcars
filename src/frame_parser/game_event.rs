@@ -9,7 +9,7 @@ impl ActorHandler for GameEventHandler {
     fn create(&self, _: &mut ParsedFrameData, _: &mut FrameState, _: i32) {}
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
-              actor_id: i32, updated_attr: &String, _: &Vec<String>) {
+              actor_id: i32, updated_attr: &String, objects: &Vec<String>) {
         let attributes = match state.actors.get(&actor_id) {
             Some(attributes) => attributes,
             _ => return,
@@ -42,11 +42,16 @@ impl ActorHandler for GameEventHandler {
             }
             "TAGame.GameEvent_Soccar_TA:SubRulesArchetype" => {
                 match attributes.get("TAGame.GameEvent_Soccar_TA:SubRulesArchetype") {
-                    Some(Attribute::ActiveActor(actor)) => { /* TODO rumble mutator */ }
+                    Some(Attribute::ActiveActor(actor)) => {
+                        data.game_info.rumble_mutator = Some(objects[actor.actor.0 as usize].clone())
+                    }
                     _ => return
                 }
             }
             _ => return
         }
+    }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
     }
 }

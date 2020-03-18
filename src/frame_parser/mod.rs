@@ -7,6 +7,7 @@ mod game_info;
 mod jump;
 pub mod models;
 mod player;
+mod rumble;
 mod team;
 mod utils;
 
@@ -21,6 +22,7 @@ use crate::frame_parser::jump::{JumpHandler, DoubleJumpHandler, DodgeHandler};
 use crate::frame_parser::boost::{BoostHandler, BoostPickupHandler};
 use crate::frame_parser::game_info::GameInfoHandler;
 use crate::frame_parser::team::TeamHandler;
+use crate::frame_parser::rumble::RumbleItemHandler;
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -28,6 +30,8 @@ pub trait ActorHandler {
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
               actor_id: i32, updated_attr: &String,
               objects: &Vec<String>);
+
+    fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
 }
 
 pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
@@ -39,6 +43,9 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
     }
     if object_name.ends_with(":GameReplicationInfoArchetype") {
         return Some(Box::new(GameInfoHandler {}));
+    }
+    if object_name.starts_with("Archetypes.SpecialPickups.SpecialPickup_") {
+        return Some(Box::new(RumbleItemHandler {}));
     }
     match object_name.as_ref() {
         "Archetypes.Ball.Ball_Default" => Some(Box::new(BallHandler { ball_type: BallType::Default })),

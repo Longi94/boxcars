@@ -36,6 +36,9 @@ impl ActorHandler for JumpHandler {
             _ => return,
         }
     }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    }
 }
 
 
@@ -71,6 +74,9 @@ impl ActorHandler for DoubleJumpHandler {
             _ => return,
         }
     }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    }
 }
 
 
@@ -105,5 +111,8 @@ impl ActorHandler for DodgeHandler {
             }
             _ => return,
         }
+    }
+
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
     }
 }

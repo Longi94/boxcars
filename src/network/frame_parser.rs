@@ -260,7 +260,10 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 
                     // Remove deleted actors
                     for deleted in &frame.deleted_actors {
-                        actors_handlers.remove(&deleted.0);
+                        match actors_handlers.remove(&deleted.0) {
+                            Some(handler) => handler.destroy(&mut frames_data, &mut state, deleted.0),
+                            _ => {}
+                        };
                         state.actors.remove(&deleted.0);
                         state.actor_objects.remove(&deleted.0);
                     }
