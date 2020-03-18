@@ -64,8 +64,8 @@ impl ActorHandler for CarHandler {
                 Some(Attribute::TeamPaint(team_paint)) => {
                     player_data.primary_color = Some(team_paint.primary_color);
                     player_data.accent_color = Some(team_paint.accent_color);
-                    player_data.primary_finish = Some(team_paint.primary_finish);
-                    player_data.accent_finish = Some(team_paint.accent_finish);
+                    player_data.primary_finish = team_paint.primary_finish;
+                    player_data.accent_finish = team_paint.accent_finish;
                 }
                 _ => return,
             }

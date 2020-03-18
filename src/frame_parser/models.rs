@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 use std::collections::{HashMap, HashSet};
 use crate::CamSettings;
 use crate::frame_parser::boost::BOOST_PER_SECOND;
+use crate::attributes::Loadout;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
@@ -291,8 +292,8 @@ pub struct PlayerData {
     pub handbrake: Vec<Option<bool>>,
     pub primary_color: Option<u8>,
     pub accent_color: Option<u8>,
-    pub primary_finish: Option<u32>,
-    pub accent_finish: Option<u32>,
+    pub primary_finish: u32,
+    pub accent_finish: u32,
     pub camera_settings: Option<CamSettings>,
     pub jump_active: Vec<Option<u8>>,
     pub double_jump_active: Vec<Option<u8>>,
@@ -300,6 +301,8 @@ pub struct PlayerData {
     pub boost_active: Vec<Option<u8>>,
     pub boost: Vec<Option<f32>>,
     pub boost_collect: Vec<bool>,
+    pub loadout: Loadout,
+    pub loadout_paints: LoadoutPaints,
 }
 
 impl PlayerData {
@@ -326,10 +329,27 @@ impl PlayerData {
             boost_active: Vec::with_capacity(c),
             boost: Vec::with_capacity(c),
             boost_collect: Vec::with_capacity(c),
+            loadout: Loadout {
+                version: 0,
+                body: 23,
+                decal: 0,
+                wheels: 376,
+                rocket_trail: 0,
+                antenna: 0,
+                topper: 0,
+                unknown1: 0,
+                unknown2: None,
+                engine_audio: None,
+                trail: None,
+                goal_explosion: None,
+                banner: None,
+                unknown3: None,
+            },
+            loadout_paints: LoadoutPaints::new(),
             primary_color: None,
             accent_color: None,
-            primary_finish: None,
-            accent_finish: None,
+            primary_finish: 270,
+            accent_finish: 270,
             camera_settings: None,
         };
 
@@ -381,4 +401,35 @@ pub struct Demolition {
     pub attacker_player_id: i32,
     pub victim_player_id: i32,
     pub frame_number: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct LoadoutPaints {
+    pub body: u32,
+    pub decal: u32,
+    pub wheels: u32,
+    pub boost: u32,
+    pub antenna: u32,
+    pub topper: u32,
+    pub trail: u32,
+    pub goal_explosion: u32,
+    pub banner: u32,
+    pub avatar_border: u32,
+}
+
+impl LoadoutPaints {
+    pub fn new() -> Self {
+        LoadoutPaints {
+            body: 0,
+            decal: 0,
+            wheels: 0,
+            boost: 0,
+            antenna: 0,
+            topper: 0,
+            trail: 0,
+            goal_explosion: 0,
+            banner: 0,
+            avatar_border: 0,
+        }
+    }
 }
