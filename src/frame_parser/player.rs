@@ -10,7 +10,12 @@ pub struct PlayerHandler {}
 
 impl ActorHandler for PlayerHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        data.player_data.insert(actor_id, PlayerData::with_capacity(state.total_frames));
+        if data.player_data.contains_key(&actor_id) {
+            return;
+        }
+        let mut player_data = PlayerData::with_capacity(state.total_frames);
+        player_data.new_frame();
+        data.player_data.insert(actor_id, player_data);
     }
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,

@@ -8,6 +8,7 @@ pub struct ParsedFrameData {
     pub ball_data: BallData,
     pub player_data: HashMap<i32, PlayerData>,
     pub parties: HashMap<String, HashSet<String>>,
+    pub demos: Vec<Demolition>
 }
 
 impl ParsedFrameData {
@@ -17,6 +18,7 @@ impl ParsedFrameData {
             ball_data: BallData::with_capacity(c),
             player_data: HashMap::new(),
             parties: HashMap::new(),
+            demos: Vec::new(),
         }
     }
 
@@ -95,7 +97,11 @@ impl RigidBodyFrames {
         }
     }
 
-    pub fn add_rigid_body(&mut self, i: usize, rb: &RigidBody) {
+    pub fn add_rigid_body(&mut self, i: usize, rb: &RigidBody, ignore_sleeping: bool) {
+        if ignore_sleeping && rb.sleeping {
+            return;
+        }
+
         self.pos_x[i] = Some(rb.location.x);
         self.pos_y[i] = Some(rb.location.y);
         self.pos_z[i] = Some(rb.location.z);
@@ -196,6 +202,14 @@ pub struct PlayerData {
     pub ping: Vec<Option<u8>>,
     pub ball_cam: Vec<Option<bool>>,
     pub time_till_power_up: Option<Vec<Option<i32>>>,
+    pub rigid_body: RigidBodyFrames,
+    pub throttle: Vec<Option<u8>>,
+    pub steer: Vec<Option<u8>>,
+    pub handbrake: Vec<Option<bool>>,
+    pub primary_color: Option<u8>,
+    pub accent_color: Option<u8>,
+    pub primary_finish: Option<u32>,
+    pub accent_finish: Option<u32>,
 }
 
 impl PlayerData {
@@ -207,15 +221,34 @@ impl PlayerData {
             ping: Vec::with_capacity(c),
             ball_cam: Vec::with_capacity(c),
             time_till_power_up: None,
+            rigid_body: RigidBodyFrames::with_capacity(c),
+            throttle: Vec::with_capacity(c),
+            steer: Vec::with_capacity(c),
+            handbrake: Vec::with_capacity(c),
+            primary_color: None,
+            accent_color: None,
+            primary_finish: None,
+            accent_finish: None,
         }
     }
 
     pub fn new_frame(&mut self) {
         self.ping.push(self.ping.last().unwrap_or(&None).clone());
         self.ball_cam.push(self.ball_cam.last().unwrap_or(&None).clone());
+        self.throttle.push(self.throttle.last().unwrap_or(&None).clone());
+        self.steer.push(self.steer.last().unwrap_or(&None).clone());
+        self.handbrake.push(self.handbrake.last().unwrap_or(&None).clone());
         match &mut self.time_till_power_up {
             Some(arr) => arr.push(arr.last().unwrap_or(&None).clone()),
             None => {}
         }
+        self.rigid_body.new_frame();
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct Demolition {
+    pub attacker_player_id: i32,
+    pub victim_player_id: i32,
+    pub frame_number: usize,
 }

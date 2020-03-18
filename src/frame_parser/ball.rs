@@ -21,7 +21,8 @@ impl ActorHandler for BallHandler {
 
         match updated_attr.as_ref() {
             "TAGame.RBActor_TA:ReplicatedRBState" => match attributes.get("TAGame.RBActor_TA:ReplicatedRBState") {
-                Some(Attribute::RigidBody(rigid_body)) => data.ball_data.rigid_body.add_rigid_body(state.frame, rigid_body),
+                Some(Attribute::RigidBody(rigid_body)) =>
+                    data.ball_data.rigid_body.add_rigid_body(state.frame, rigid_body, false),
                 _ => return
             },
             "TAGame.Ball_TA:HitTeamNum" => match attributes.get("TAGame.Ball_TA:HitTeamNum") {
