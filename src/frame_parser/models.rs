@@ -28,11 +28,11 @@ impl ParsedFrameData {
         }
     }
 
-    pub fn new_frame(&mut self, time: f32, delta: f32) {
-        self.frames_data.new_frame(time, delta);
-        self.ball_data.new_frame();
+    pub fn new_frame(&mut self, frame: usize, time: f32, delta: f32) {
+        self.frames_data.new_frame(frame, time, delta);
+        self.ball_data.new_frame(frame);
         for (_, data) in &mut self.player_data {
-            data.new_frame(delta);
+            data.new_frame(frame, delta);
         }
     }
 }
@@ -72,23 +72,35 @@ pub struct FramesData {
 
 impl FramesData {
     pub fn with_capacity(c: usize) -> Self {
-        FramesData {
+        let mut data = FramesData {
             time: Vec::with_capacity(c),
             delta: Vec::with_capacity(c),
             seconds_remaining: Vec::with_capacity(c),
             replicated_seconds_remaining: Vec::with_capacity(c),
             is_overtime: Vec::with_capacity(c),
             ball_has_been_hit: Vec::with_capacity(c),
-        }
+        };
+
+        data.time.resize(c, 0.0);
+        data.delta.resize(c, 0.0);
+        data.seconds_remaining.resize(c, None);
+        data.replicated_seconds_remaining.resize(c, None);
+        data.is_overtime.resize(c, None);
+        data.ball_has_been_hit.resize(c, None);
+
+        data
     }
 
-    pub fn new_frame(&mut self, time: f32, delta: f32) {
-        self.time.push(time);
-        self.delta.push(delta);
-        self.seconds_remaining.push(self.seconds_remaining.last().unwrap_or(&None).clone());
-        self.replicated_seconds_remaining.push(self.replicated_seconds_remaining.last().unwrap_or(&None).clone());
-        self.is_overtime.push(self.is_overtime.last().unwrap_or(&None).clone());
-        self.ball_has_been_hit.push(self.ball_has_been_hit.last().unwrap_or(&None).clone());
+    pub fn new_frame(&mut self, frame: usize, time: f32, delta: f32) {
+        self.time[frame] = time;
+        self.delta[frame] = delta;
+
+        if frame > 0 {
+            self.seconds_remaining[frame] = self.seconds_remaining[frame - 1].clone();
+            self.replicated_seconds_remaining[frame] = self.replicated_seconds_remaining[frame - 1].clone();
+            self.is_overtime[frame] = self.is_overtime[frame - 1].clone();
+            self.ball_has_been_hit[frame] = self.ball_has_been_hit[frame - 1].clone();
+        }
     }
 }
 
@@ -110,7 +122,7 @@ pub struct RigidBodyFrames {
 
 impl RigidBodyFrames {
     pub fn with_capacity(c: usize) -> Self {
-        RigidBodyFrames {
+        let mut frames = RigidBodyFrames {
             pos_x: Vec::with_capacity(c),
             pos_y: Vec::with_capacity(c),
             pos_z: Vec::with_capacity(c),
@@ -123,7 +135,22 @@ impl RigidBodyFrames {
             ang_vel_x: Vec::with_capacity(c),
             ang_vel_y: Vec::with_capacity(c),
             ang_vel_z: Vec::with_capacity(c),
-        }
+        };
+
+        frames.pos_x.resize(c, None);
+        frames.pos_y.resize(c, None);
+        frames.pos_z.resize(c, None);
+        frames.rot_x.resize(c, None);
+        frames.rot_y.resize(c, None);
+        frames.rot_z.resize(c, None);
+        frames.vel_x.resize(c, None);
+        frames.vel_y.resize(c, None);
+        frames.vel_z.resize(c, None);
+        frames.ang_vel_x.resize(c, None);
+        frames.ang_vel_y.resize(c, None);
+        frames.ang_vel_z.resize(c, None);
+
+        frames
     }
 
     pub fn add_rigid_body(&mut self, i: usize, rb: &RigidBody, ignore_sleeping: bool) {
@@ -174,19 +201,21 @@ impl RigidBodyFrames {
         }
     }
 
-    pub fn new_frame(&mut self) {
-        self.pos_x.push(self.pos_x.last().unwrap_or(&None).clone());
-        self.pos_y.push(self.pos_y.last().unwrap_or(&None).clone());
-        self.pos_z.push(self.pos_z.last().unwrap_or(&None).clone());
-        self.rot_x.push(self.rot_x.last().unwrap_or(&None).clone());
-        self.rot_y.push(self.rot_y.last().unwrap_or(&None).clone());
-        self.rot_z.push(self.rot_z.last().unwrap_or(&None).clone());
-        self.vel_x.push(self.vel_x.last().unwrap_or(&None).clone());
-        self.vel_y.push(self.vel_y.last().unwrap_or(&None).clone());
-        self.vel_z.push(self.vel_z.last().unwrap_or(&None).clone());
-        self.ang_vel_x.push(self.ang_vel_x.last().unwrap_or(&None).clone());
-        self.ang_vel_y.push(self.ang_vel_y.last().unwrap_or(&None).clone());
-        self.ang_vel_z.push(self.ang_vel_z.last().unwrap_or(&None).clone());
+    pub fn new_frame(&mut self, frame: usize) {
+        if frame > 0 {
+            self.pos_x[frame] = self.pos_x[frame - 1].clone();
+            self.pos_y[frame] = self.pos_y[frame - 1].clone();
+            self.pos_z[frame] = self.pos_z[frame - 1].clone();
+            self.rot_x[frame] = self.rot_x[frame - 1].clone();
+            self.rot_y[frame] = self.rot_y[frame - 1].clone();
+            self.rot_z[frame] = self.rot_z[frame - 1].clone();
+            self.vel_x[frame] = self.vel_x[frame - 1].clone();
+            self.vel_y[frame] = self.vel_y[frame - 1].clone();
+            self.vel_z[frame] = self.vel_z[frame - 1].clone();
+            self.ang_vel_x[frame] = self.ang_vel_x[frame - 1].clone();
+            self.ang_vel_y[frame] = self.ang_vel_y[frame - 1].clone();
+            self.ang_vel_z[frame] = self.ang_vel_z[frame - 1].clone();
+        }
     }
 }
 
@@ -209,16 +238,20 @@ pub struct BallData {
 
 impl BallData {
     pub fn with_capacity(c: usize) -> Self {
-        BallData {
+        let mut data = BallData {
             ball_type: BallType::Unknown,
             rigid_body: RigidBodyFrames::with_capacity(c),
             hit_team_no: Vec::with_capacity(c),
-        }
+        };
+        data.hit_team_no.resize(c, None);
+        data
     }
 
-    pub fn new_frame(&mut self) {
-        self.rigid_body.new_frame();
-        self.hit_team_no.push(self.hit_team_no.last().unwrap_or(&None).clone());
+    pub fn new_frame(&mut self, frame: usize) {
+        self.rigid_body.new_frame(frame);
+        if frame > 0 {
+            self.hit_team_no[frame] = self.hit_team_no[frame - 1].clone();
+        }
     }
 }
 
@@ -266,7 +299,7 @@ pub struct PlayerData {
 
 impl PlayerData {
     pub fn with_capacity(c: usize) -> Self {
-        PlayerData {
+        let mut data = PlayerData {
             remote_id: None,
             name: None,
             team_actor: -1,
@@ -288,32 +321,48 @@ impl PlayerData {
             primary_finish: None,
             accent_finish: None,
             camera_settings: None,
-        }
+        };
+
+        data.ping.resize(c, None);
+        data.ball_cam.resize(c, None);
+        data.throttle.resize(c, None);
+        data.steer.resize(c, None);
+        data.handbrake.resize(c, None);
+        data.jump_active.resize(c, None);
+        data.double_jump_active.resize(c, None);
+        data.dodge_active.resize(c, None);
+        data.boost_active.resize(c, None);
+        data.boost.resize(c, None);
+        data.boost_collect.resize(c, false);
+
+        data
     }
 
-    pub fn new_frame(&mut self, delta: f32) {
-        self.ping.push(self.ping.last().unwrap_or(&None).clone());
-        self.ball_cam.push(self.ball_cam.last().unwrap_or(&None).clone());
-        self.throttle.push(self.throttle.last().unwrap_or(&None).clone());
-        self.steer.push(self.steer.last().unwrap_or(&None).clone());
-        self.handbrake.push(self.handbrake.last().unwrap_or(&None).clone());
-        self.jump_active.push(self.jump_active.last().unwrap_or(&None).clone());
-        self.double_jump_active.push(self.double_jump_active.last().unwrap_or(&None).clone());
-        self.dodge_active.push(self.dodge_active.last().unwrap_or(&None).clone());
-        self.boost_active.push(self.boost_active.last().unwrap_or(&None).clone());
+    pub fn new_frame(&mut self, frame: usize, delta: f32) {
+        if frame > 0 {
+            self.ping[frame] = self.ping[frame - 1].clone();
+            self.ball_cam[frame] = self.ball_cam[frame - 1].clone();
+            self.throttle[frame] = self.throttle[frame - 1].clone();
+            self.steer[frame] = self.steer[frame - 1].clone();
+            self.handbrake[frame] = self.handbrake[frame - 1].clone();
+            self.jump_active[frame] = self.jump_active[frame - 1].clone();
+            self.double_jump_active[frame] = self.double_jump_active[frame - 1].clone();
+            self.dodge_active[frame] = self.dodge_active[frame - 1].clone();
+            self.boost_active[frame] = self.boost_active[frame - 1].clone();
 
-        if self.boost_active.last().unwrap_or(&None).unwrap_or(0) % 2 == 1 {
-            self.boost.push(Some((self.boost.last().unwrap_or(&None).unwrap_or(0.0) -
-                delta * BOOST_PER_SECOND).max(0.0)));
-        } else {
-            self.boost.push(self.boost.last().unwrap_or(&None).clone());
+            if self.boost_active[frame - 1].unwrap_or(0) % 2 == 1 {
+                self.boost[frame] = Some((self.boost[frame - 1].unwrap_or(0.0) -
+                    delta * BOOST_PER_SECOND).max(0.0));
+            } else {
+                self.boost[frame] = self.boost[frame - 1].clone();
+            }
+
+            match &mut self.time_till_power_up {
+                Some(arr) => arr[frame] = arr[frame - 1].clone(),
+                None => {}
+            }
         }
-        self.boost_collect.push(false);
-        match &mut self.time_till_power_up {
-            Some(arr) => arr.push(arr.last().unwrap_or(&None).clone()),
-            None => {}
-        }
-        self.rigid_body.new_frame();
+        self.rigid_body.new_frame(frame);
     }
 }
 

@@ -256,7 +256,7 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                 DecodedFrame::Frame(frame) => {
                     state.delta = frame.delta;
                     state.time = frame.time;
-                    frames_data.new_frame(frame.time, frame.delta);
+                    frames_data.new_frame(state.frame, frame.time, frame.delta);
 
                     // Remove deleted actors
                     for deleted in &frame.deleted_actors {

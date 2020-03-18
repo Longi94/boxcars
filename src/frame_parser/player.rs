@@ -13,9 +13,7 @@ impl ActorHandler for PlayerHandler {
         if data.player_data.contains_key(&actor_id) {
             return;
         }
-        let mut player_data = PlayerData::with_capacity(state.total_frames);
-        player_data.new_frame(state.delta);
-        data.player_data.insert(actor_id, player_data);
+        data.player_data.insert(actor_id, PlayerData::with_capacity(state.total_frames));
     }
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
@@ -25,7 +23,7 @@ impl ActorHandler for PlayerHandler {
             _ => return,
         };
 
-        let mut player_data = match data.player_data.get_mut(&actor_id) {
+        let player_data = match data.player_data.get_mut(&actor_id) {
             Some(player_data) => player_data,
             _ => return,
         };
@@ -67,7 +65,9 @@ impl ActorHandler for PlayerHandler {
             }
             "TAGame.PRI_TA:TimeTillItem" => {
                 if player_data.time_till_power_up.is_none() {
-                    player_data.time_till_power_up = Some(Vec::with_capacity(state.total_frames));
+                    let mut vec: Vec<Option<i32>> = Vec::with_capacity(state.total_frames);
+                    vec.resize(state.total_frames, None);
+                    player_data.time_till_power_up = Some(vec);
                 }
 
                 match attributes.get("TAGame.PRI_TA:TimeTillItem") {
