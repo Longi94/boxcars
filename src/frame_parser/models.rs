@@ -249,7 +249,7 @@ pub enum BallType {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct BallData {
-    pub ball_type: BallType,
+    pub ball_type: i32,
     pub rigid_body: RigidBodyFrames,
     pub hit_team_no: Vec<Option<u8>>,
 }
@@ -257,7 +257,7 @@ pub struct BallData {
 impl BallData {
     pub fn with_capacity(c: usize) -> Self {
         let mut data = BallData {
-            ball_type: BallType::Unknown,
+            ball_type: BallType::Unknown as i32,
             rigid_body: RigidBodyFrames::with_capacity(c),
             hit_team_no: Vec::with_capacity(c),
         };
@@ -325,6 +325,7 @@ pub struct PlayerData {
     pub boost_collect: Vec<bool>,
     pub loadout: Loadouts,
     pub loadout_paints: LoadoutPaints,
+    pub loadout_user_colors: LoadoutUserColors,
     pub power_up_active: Vec<Option<bool>>,
     pub power_up: Vec<Option<String>>,
 }
@@ -362,6 +363,7 @@ impl PlayerData {
             power_up: Vec::with_capacity(c),
             loadout: Loadouts::new(),
             loadout_paints: LoadoutPaints::new(),
+            loadout_user_colors: LoadoutUserColors::new(),
             primary_color: None,
             accent_color: None,
             primary_finish: 270,
@@ -472,31 +474,61 @@ impl LoadoutPaints {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct Paints {
-    pub body: u32,
-    pub decal: u32,
-    pub wheels: u32,
-    pub boost: u32,
-    pub antenna: u32,
-    pub topper: u32,
-    pub trail: u32,
-    pub goal_explosion: u32,
-    pub banner: u32,
-    pub avatar_border: u32,
+    pub body: Option<u32>,
+    pub decal: Option<u32>,
+    pub wheels: Option<u32>,
+    pub rocket_trail: Option<u32>,
+    pub antenna: Option<u32>,
+    pub topper: Option<u32>,
+    pub trail: Option<u32>,
+    pub goal_explosion: Option<u32>,
+    pub banner: Option<u32>,
+    pub avatar_border: Option<u32>,
 }
 
 impl Paints {
     pub fn new() -> Self {
         Paints {
-            body: 0,
-            decal: 0,
-            wheels: 0,
-            boost: 0,
-            antenna: 0,
-            topper: 0,
-            trail: 0,
-            goal_explosion: 0,
-            banner: 0,
-            avatar_border: 0,
+            body: None,
+            decal: None,
+            wheels: None,
+            rocket_trail: None,
+            antenna: None,
+            topper: None,
+            trail: None,
+            goal_explosion: None,
+            banner: None,
+            avatar_border: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct LoadoutUserColors {
+    pub blue: UserColors,
+    pub orange: Option<UserColors>,
+}
+
+impl LoadoutUserColors {
+    pub fn new() -> Self {
+        LoadoutUserColors {
+            blue: UserColors::new(),
+            orange: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct UserColors {
+    pub banner: Option<u32>,
+    pub avatar_border: Option<u32>,
+}
+
+impl UserColors {
+    pub fn new() -> Self {
+        UserColors {
+            banner: None,
+            avatar_border: None,
         }
     }
 }

@@ -1,5 +1,5 @@
 use crate::frame_parser::ActorHandler;
-use crate::frame_parser::models::{ParsedFrameData, Paints};
+use crate::frame_parser::models::{ParsedFrameData, Paints, UserColors};
 use crate::network::frame_parser::FrameState;
 use crate::frame_parser::models::PlayerData;
 use crate::{Attribute, Product};
@@ -169,7 +169,8 @@ impl ActorHandler for PlayerHandler {
             "TAGame.PRI_TA:ClientLoadoutOnline" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadoutOnline") {
                     Some(Attribute::LoadoutOnline(paints)) => {
-                        set_paint_values(&mut player_data.loadout_paints.blue, &paints, objects);
+                        set_paint_values(&mut player_data.loadout_paints.blue,
+                                         &mut player_data.loadout_user_colors.blue, &paints, objects);
                     }
                     _ => return,
                 }
@@ -177,10 +178,13 @@ impl ActorHandler for PlayerHandler {
             "TAGame.PRI_TA:ClientLoadoutsOnline" => {
                 match attributes.get("TAGame.PRI_TA:ClientLoadoutsOnline") {
                     Some(Attribute::LoadoutsOnline(team_paints)) => {
-                        set_paint_values(&mut player_data.loadout_paints.blue, &team_paints.blue, objects);
+                        set_paint_values(&mut player_data.loadout_paints.blue,
+                                         &mut player_data.loadout_user_colors.blue, &team_paints.blue, objects);
                         let mut orange_paints = Paints::new();
-                        set_paint_values(&mut orange_paints, &team_paints.blue, objects);
+                        let mut orange_user_colors = UserColors::new();
+                        set_paint_values(&mut orange_paints, &mut orange_user_colors, &team_paints.blue, objects);
                         player_data.loadout_paints.orange = Some(orange_paints);
+                        player_data.loadout_user_colors.orange = Some(orange_user_colors);
                     }
                     _ => return,
                 }
@@ -223,20 +227,22 @@ impl ActorHandler for PlayerHandler {
     }
 }
 
-fn set_paint_values(loadout_paints: &mut Paints, paints: &Vec<Vec<Product>>, objects: &Vec<String>) {
+fn set_paint_values(loadout_paints: &mut Paints, user_colors: &mut UserColors, paints: &Vec<Vec<Product>>, objects: &Vec<String>) {
     loadout_paints.body = get_paint_value(&paints[0], objects);
     loadout_paints.decal = get_paint_value(&paints[1], objects);
     loadout_paints.wheels = get_paint_value(&paints[2], objects);
-    loadout_paints.boost = get_paint_value(&paints[3], objects);
+    loadout_paints.rocket_trail = get_paint_value(&paints[3], objects);
     loadout_paints.antenna = get_paint_value(&paints[4], objects);
     loadout_paints.topper = get_paint_value(&paints[5], objects);
     loadout_paints.trail = get_paint_value(&paints[14], objects);
     loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
     loadout_paints.banner = get_paint_value(&paints[16], objects);
     loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
+    user_colors.banner = get_user_color_value(&paints[16], objects);
+    user_colors.avatar_border = get_user_color_value(&paints[20], objects);
 }
 
-fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> u32 {
+fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u32> {
     for attr in attributes {
         let attr_name = match objects.get(attr.object_ind as usize) {
             None => continue,
@@ -246,20 +252,34 @@ fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> u32 {
         match attr_name.as_ref() {
             "TAGame.ProductAttribute_Painted_TA" => {
                 match attr.value {
-                    ProductValue::OldPaint(paint) => return paint,
-                    ProductValue::NewPaint(paint) => return paint,
-                    _ => continue
-                }
-            }
-            "TAGame.ProductAttribute_UserColor_TA" => {
-                match attr.value {
-                    ProductValue::OldColor(color) => return color,
-                    ProductValue::NewColor(color) => return color as u32,
+                    ProductValue::OldPaint(paint) => return Some(paint),
+                    ProductValue::NewPaint(paint) => return Some(paint),
                     _ => continue
                 }
             }
             _ => continue
         }
     }
-    0
+    None
+}
+
+fn get_user_color_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u32> {
+    for attr in attributes {
+        let attr_name = match objects.get(attr.object_ind as usize) {
+            None => continue,
+            Some(attr_name) => attr_name
+        };
+
+        match attr_name.as_ref() {
+            "TAGame.ProductAttribute_UserColor_TA" => {
+                match attr.value {
+                    ProductValue::OldColor(color) => return Some(color),
+                    ProductValue::NewColor(color) => return Some(color as u32),
+                    _ => continue
+                }
+            }
+            _ => continue
+        }
+    }
+    None
 }

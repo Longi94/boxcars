@@ -52,6 +52,10 @@ impl ActorHandler for GameEventHandler {
         }
     }
 
-    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, _actor_id: i32) {
+        data.frames_data.is_overtime[state.frame] = None;
+        data.frames_data.seconds_remaining[state.frame] = None;
+        data.frames_data.replicated_seconds_remaining[state.frame] = None;
+        data.frames_data.ball_has_been_hit[state.frame] = None;
     }
 }

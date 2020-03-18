@@ -243,7 +243,7 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                                     )
                                 })
                                 .collect(),
-                            frames: Vec:: new(),
+                            frames: Vec::new(),
                             actors: actors.clone(),
                             new_actors: new_actors.clone(),
                             updated_actors: updated_actors.clone(),
@@ -282,6 +282,13 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                             Some(handler) => handler
                         };
 
+                        if actors_handlers.contains_key(&new_actor.actor_id.0) {
+                            match actors_handlers.remove(&new_actor.actor_id.0) {
+                                Some(handler) => handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0),
+                                _ => {}
+                            }
+                        }
+
                         handler.create(&mut frames_data, &mut state, new_actor.actor_id.0);
                         actors_handlers.insert(new_actor.actor_id.0, handler);
                     }
@@ -316,9 +323,9 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                         handler.update(&mut frames_data, &mut state, updated_actor.actor_id.0, &object_name,
                                        &self.objects);
                     }
-                    
+
                     state.frame += 1;
-                },
+                }
             }
         }
 

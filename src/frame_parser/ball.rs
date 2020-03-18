@@ -9,7 +9,7 @@ pub struct BallHandler {
 
 impl ActorHandler for BallHandler {
     fn create(&self, data: &mut ParsedFrameData, _: &mut FrameState, _: i32) {
-        data.ball_data.ball_type = self.ball_type;
+        data.ball_data.ball_type = self.ball_type as i32;
     }
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
