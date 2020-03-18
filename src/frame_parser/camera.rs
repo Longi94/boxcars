@@ -29,7 +29,7 @@ impl ActorHandler for CameraSettingsHandler {
         match updated_attr.as_ref() {
             "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera" => {
                 match attributes.get("TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera") {
-                    Some(Attribute::Boolean(bool)) => player_data.ball_cam.push(Some(bool.clone())),
+                    Some(Attribute::Boolean(bool)) => player_data.ball_cam[state.frame] = Some(bool.clone()),
                     _ => return,
                 }
             }

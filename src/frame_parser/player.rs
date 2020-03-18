@@ -55,13 +55,13 @@ impl ActorHandler for PlayerHandler {
             }
             "Engine.PlayerReplicationInfo:Ping" => {
                 match attributes.get("Engine.PlayerReplicationInfo:Ping") {
-                    Some(Attribute::Byte(ping)) => player_data.ping.push(Some(ping.clone())),
+                    Some(Attribute::Byte(ping)) => player_data.ping[state.frame] = Some(ping.clone()),
                     _ => return,
                 };
             }
             "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera" => {
                 match attributes.get("TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera") {
-                    Some(Attribute::Boolean(ball_cam)) => player_data.ball_cam.push(Some(ball_cam.clone())),
+                    Some(Attribute::Boolean(ball_cam)) => player_data.ball_cam[state.frame] = Some(ball_cam.clone()),
                     _ => return,
                 };
             }
@@ -71,7 +71,8 @@ impl ActorHandler for PlayerHandler {
                 }
 
                 match attributes.get("TAGame.PRI_TA:TimeTillItem") {
-                    Some(Attribute::Int(time)) => player_data.time_till_power_up.as_mut().unwrap().push(Some(time.clone())),
+                    Some(Attribute::Int(time)) => player_data.time_till_power_up.as_mut()
+                        .unwrap()[state.frame] = Some(time.clone()),
                     _ => return,
                 };
             }
