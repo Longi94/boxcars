@@ -32,7 +32,7 @@ impl ActorHandler for BoostHandler {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
                     Some(Attribute::Byte(b)) => {
-                        if b % 2 == 1 {
+                        if b % 2 == 1 && player_data.boost[state.frame - 1].is_some() {
                             player_data.boost[state.frame] =
                                 Some((player_data.boost[state.frame - 1].unwrap() - state.delta * BOOST_PER_SECOND).max(0.0))
                         }

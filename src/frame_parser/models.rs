@@ -323,9 +323,9 @@ pub struct PlayerData {
     pub primary_finish: u32,
     pub accent_finish: u32,
     pub camera_settings: Option<CamSettings>,
-    pub jump_active: Vec<Option<u8>>,
-    pub double_jump_active: Vec<Option<u8>>,
-    pub dodge_active: Vec<Option<u8>>,
+    pub jump_active: Vec<u8>,
+    pub double_jump_active: Vec<u8>,
+    pub dodge_active: Vec<u8>,
     pub boost_active: Vec<u8>,
     pub boost: Vec<Option<f32>>,
     pub boost_collect: Vec<bool>,
@@ -382,9 +382,9 @@ impl PlayerData {
         data.throttle.resize(c, None);
         data.steer.resize(c, None);
         data.handbrake.resize(c, None);
-        data.jump_active.resize(c, None);
-        data.double_jump_active.resize(c, None);
-        data.dodge_active.resize(c, None);
+        data.jump_active.resize(c, 0);
+        data.double_jump_active.resize(c, 0);
+        data.dodge_active.resize(c, 0);
         data.boost_active.resize(c, 0);
         data.boost.resize(c, None);
         data.boost_collect.resize(c, false);

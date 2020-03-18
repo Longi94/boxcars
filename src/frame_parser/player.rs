@@ -234,12 +234,15 @@ fn set_paint_values(loadout_paints: &mut Paints, user_colors: &mut UserColors, p
     loadout_paints.rocket_trail = get_paint_value(&paints[3], objects);
     loadout_paints.antenna = get_paint_value(&paints[4], objects);
     loadout_paints.topper = get_paint_value(&paints[5], objects);
-    loadout_paints.trail = get_paint_value(&paints[14], objects);
-    loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
-    loadout_paints.banner = get_paint_value(&paints[16], objects);
-    loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
-    user_colors.banner = get_user_color_value(&paints[16], objects);
-    user_colors.avatar_border = get_user_color_value(&paints[20], objects);
+
+    if paints.len() > 14 {
+        loadout_paints.trail = get_paint_value(&paints[14], objects);
+        loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
+        loadout_paints.banner = get_paint_value(&paints[16], objects);
+        loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
+        user_colors.banner = get_user_color_value(&paints[16], objects);
+        user_colors.avatar_border = get_user_color_value(&paints[20], objects);
+    }
 }
 
 fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u32> {

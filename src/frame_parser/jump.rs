@@ -29,7 +29,7 @@ impl ActorHandler for JumpHandler {
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.jump_active[state.frame] = Some(b.clone()),
+                    Some(Attribute::Byte(b)) => player_data.jump_active[state.frame] = b.clone(),
                     _ => return,
                 }
             }
@@ -62,7 +62,7 @@ impl ActorHandler for JumpHandler {
             _ => return,
         };
 
-        player_data.jump_active[state.frame] = None;
+        player_data.jump_active[state.frame] = 0;
     }
 }
 
@@ -92,7 +92,7 @@ impl ActorHandler for DoubleJumpHandler {
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.double_jump_active[state.frame] = Some(b.clone()),
+                    Some(Attribute::Byte(b)) => player_data.double_jump_active[state.frame] = b.clone(),
                     _ => return,
                 }
             }
@@ -125,7 +125,7 @@ impl ActorHandler for DoubleJumpHandler {
             _ => return,
         };
 
-        player_data.double_jump_active[state.frame] = None;
+        player_data.double_jump_active[state.frame] = 0;
     }
 }
 
@@ -155,7 +155,7 @@ impl ActorHandler for DodgeHandler {
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.dodge_active[state.frame] = Some(b.clone()),
+                    Some(Attribute::Byte(b)) => player_data.dodge_active[state.frame] = b.clone(),
                     _ => return,
                 }
             }
@@ -188,6 +188,6 @@ impl ActorHandler for DodgeHandler {
             _ => return,
         };
 
-        player_data.dodge_active[state.frame] = None;
+        player_data.dodge_active[state.frame] = 0;
     }
 }
