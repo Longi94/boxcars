@@ -218,6 +218,21 @@ impl RigidBodyFrames {
             self.ang_vel_z[frame] = self.ang_vel_z[frame - 1].clone();
         }
     }
+
+    pub fn destroy_frame(&mut self, frame: usize) {
+        self.pos_x[frame] = None;
+        self.pos_y[frame] = None;
+        self.pos_z[frame] = None;
+        self.rot_x[frame] = None;
+        self.rot_y[frame] = None;
+        self.rot_z[frame] = None;
+        self.vel_x[frame] = None;
+        self.vel_y[frame] = None;
+        self.vel_z[frame] = None;
+        self.ang_vel_x[frame] = None;
+        self.ang_vel_y[frame] = None;
+        self.ang_vel_z[frame] = None;
+    }
 }
 
 #[derive(Serialize, Debug, PartialEq, Copy, Clone)]

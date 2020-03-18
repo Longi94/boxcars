@@ -204,7 +204,37 @@ impl ActorHandler for PlayerHandler {
         }
     }
 
-    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
+    fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
+        let attributes = match state.actors.get(&actor_id) {
+            Some(attributes) => attributes,
+            _ => return,
+        };
+
+        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
+            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
+            _ => return,
+        };
+
+        if car_actor_id == -1 {
+            return;
+        }
+
+        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
+            Some(id) => id,
+            _ => return
+        };
+
+        let player_data = match data.player_data.get_mut(&player_actor_id) {
+            Some(player_data) => player_data,
+            _ => return,
+        };
+
+        player_data.ping[state.frame] = None;
+        player_data.ball_cam[state.frame] = None;
+        match &mut player_data.time_till_power_up {
+            Some(arr) => arr[state.frame] = None,
+            _ => {}
+        }
     }
 }
 
