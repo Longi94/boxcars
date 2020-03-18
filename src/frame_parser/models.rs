@@ -9,6 +9,7 @@ pub struct ParsedFrameData {
     pub game_info: GameInfo,
     pub frames_data: FramesData,
     pub ball_data: BallData,
+    pub team_data: HashMap<i32, TeamData>,
     pub player_data: HashMap<i32, PlayerData>,
     pub parties: HashMap<String, HashSet<String>>,
     pub demos: Vec<Demolition>,
@@ -21,6 +22,7 @@ impl ParsedFrameData {
             frames_data: FramesData::with_capacity(c),
             ball_data: BallData::with_capacity(c),
             player_data: HashMap::new(),
+            team_data: HashMap::new(),
             parties: HashMap::new(),
             demos: Vec::new(),
         }
@@ -220,6 +222,22 @@ impl BallData {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct TeamData {
+    pub name: Option<String>,
+    pub is_orange: bool,
+    pub score: i32,
+}
+
+impl TeamData {
+    pub fn new() -> Self {
+        TeamData {
+            name: None,
+            is_orange: false,
+            score: 0,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct PlayerData {

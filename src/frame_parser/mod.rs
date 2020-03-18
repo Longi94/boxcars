@@ -7,6 +7,7 @@ mod game_info;
 mod jump;
 pub mod models;
 mod player;
+mod team;
 mod utils;
 
 use crate::network::frame_parser::FrameState;
@@ -19,6 +20,7 @@ use crate::frame_parser::camera::CameraSettingsHandler;
 use crate::frame_parser::jump::{JumpHandler, DoubleJumpHandler, DodgeHandler};
 use crate::frame_parser::boost::{BoostHandler, BoostPickupHandler};
 use crate::frame_parser::game_info::GameInfoHandler;
+use crate::frame_parser::team::TeamHandler;
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -52,6 +54,8 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         "Archetypes.CarComponents.CarComponent_DoubleJump" => Some(Box::new(DoubleJumpHandler {})),
         "Archetypes.CarComponents.CarComponent_Dodge" => Some(Box::new(DodgeHandler {})),
         "Archetypes.CarComponents.CarComponent_Boost" => Some(Box::new(BoostHandler {})),
+        "Archetypes.Teams.Team0" => Some(Box::new(TeamHandler {team: 0})),
+        "Archetypes.Teams.Team1" => Some(Box::new(TeamHandler {team: 1})),
         _ => None,
     }
 }
