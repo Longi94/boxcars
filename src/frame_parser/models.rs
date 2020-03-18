@@ -1,7 +1,7 @@
 use crate::attributes::RigidBody;
 use std::f32::consts::PI;
 use std::collections::{HashMap, HashSet};
-use crate::CamSettings;
+use crate::{CamSettings, Vector3f};
 use crate::frame_parser::boost::BOOST_PER_SECOND;
 use crate::attributes::Loadout;
 
@@ -400,6 +400,8 @@ impl PlayerData {
 pub struct Demolition {
     pub attacker_player_id: i32,
     pub victim_player_id: i32,
+    pub attack_velocity: Vector3f,
+    pub victim_velocity: Vector3f,
     pub frame_number: usize,
 }
 

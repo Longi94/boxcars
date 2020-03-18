@@ -55,6 +55,8 @@ impl ActorHandler for CarHandler {
                     data.demos.push(Demolition {
                         attacker_player_id: demolish.attacker.0,
                         victim_player_id: demolish.victim.0,
+                        attack_velocity: demolish.attack_velocity.clone(),
+                        victim_velocity: demolish.victim_velocity.clone(),
                         frame_number: state.frame.clone(),
                     })
                 }
