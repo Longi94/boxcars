@@ -3,6 +3,7 @@ mod boost;
 mod camera;
 mod car;
 mod game_event;
+mod game_info;
 mod jump;
 pub mod models;
 mod player;
@@ -17,6 +18,7 @@ use crate::frame_parser::car::CarHandler;
 use crate::frame_parser::camera::CameraSettingsHandler;
 use crate::frame_parser::jump::{JumpHandler, DoubleJumpHandler, DodgeHandler};
 use crate::frame_parser::boost::{BoostHandler, BoostPickupHandler};
+use crate::frame_parser::game_info::GameInfoHandler;
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -32,6 +34,9 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
     }
     if object_name.contains("TheWorld:PersistentLevel.VehiclePickup_Boost_TA") {
         return Some(Box::new(BoostPickupHandler {}));
+    }
+    if object_name.ends_with(":GameReplicationInfoArchetype") {
+        return Some(Box::new(GameInfoHandler {}));
     }
     match object_name.as_ref() {
         "Archetypes.Ball.Ball_Default" => Some(Box::new(BallHandler { ball_type: BallType::Default })),

@@ -6,6 +6,7 @@ use crate::frame_parser::boost::BOOST_PER_SECOND;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
+    pub game_info: GameInfo,
     pub frames_data: FramesData,
     pub ball_data: BallData,
     pub player_data: HashMap<i32, PlayerData>,
@@ -16,6 +17,7 @@ pub struct ParsedFrameData {
 impl ParsedFrameData {
     pub fn with_capacity(c: usize) -> Self {
         ParsedFrameData {
+            game_info: GameInfo::new(),
             frames_data: FramesData::with_capacity(c),
             ball_data: BallData::with_capacity(c),
             player_data: HashMap::new(),
@@ -29,6 +31,29 @@ impl ParsedFrameData {
         self.ball_data.new_frame();
         for (_, data) in &mut self.player_data {
             data.new_frame(delta);
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct GameInfo {
+    pub server_id: Option<u64>,
+    pub server_name: Option<String>,
+    pub match_guid: Option<String>,
+    pub playlist: Option<i32>,
+    pub mutator_index: i32,
+    pub rumble_mutator: Option<String>,
+}
+
+impl GameInfo {
+    pub fn new() -> Self {
+        GameInfo {
+            server_id: None,
+            server_name: None,
+            match_guid: None,
+            playlist: None,
+            mutator_index: 0,
+            rumble_mutator: None,
         }
     }
 }
