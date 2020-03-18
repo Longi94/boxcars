@@ -103,6 +103,30 @@ impl ActorHandler for PlayerHandler {
                     _ => return,
                 }
             }
+            "TAGame.PRI_TA:MatchGoals" => {
+                match attributes.get("TAGame.PRI_TA:MatchGoals") {
+                    Some(Attribute::Int(goals)) => player_data.goals = Some(goals.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:MatchAssists" => {
+                match attributes.get("TAGame.PRI_TA:MatchAssists") {
+                    Some(Attribute::Int(assists)) => player_data.assists = Some(assists.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:MatchSaves" => {
+                match attributes.get("TAGame.PRI_TA:MatchSaves") {
+                    Some(Attribute::Int(saves)) => player_data.saves = Some(saves.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:MatchShots" => {
+                match attributes.get("TAGame.PRI_TA:MatchShots") {
+                    Some(Attribute::Int(shots)) => player_data.shots = Some(shots.clone()),
+                    _ => return,
+                }
+            }
             "TAGame.PRI_TA:Title" => {
                 match attributes.get("TAGame.PRI_TA:Title") {
                     Some(Attribute::Int(title)) => player_data.title = Some(title.clone()),
@@ -118,6 +142,12 @@ impl ActorHandler for PlayerHandler {
             "TAGame.PRI_TA:SteeringSensitivity" => {
                 match attributes.get("TAGame.PRI_TA:SteeringSensitivity") {
                     Some(Attribute::Float(sens)) => player_data.steering_sensitivity = Some(sens.clone()),
+                    _ => return,
+                }
+            }
+            "Engine.PlayerReplicationInfo:bBot" => {
+                match attributes.get("Engine.PlayerReplicationInfo:bBot") {
+                    Some(Attribute::Boolean(bot)) => player_data.is_bot = bot.clone(),
                     _ => return,
                 }
             }
