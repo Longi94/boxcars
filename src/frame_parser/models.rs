@@ -14,6 +14,7 @@ pub struct ParsedFrameData {
     pub player_data: HashMap<i32, PlayerData>,
     pub parties: HashMap<String, HashSet<String>>,
     pub demos: Vec<Demolition>,
+    pub dropshot_data: Option<DropshotData>,
 }
 
 impl ParsedFrameData {
@@ -26,6 +27,7 @@ impl ParsedFrameData {
             team_data: HashMap::new(),
             parties: HashMap::new(),
             demos: Vec::new(),
+            dropshot_data: None,
         }
     }
 
@@ -457,4 +459,32 @@ impl LoadoutPaints {
             avatar_border: 0,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DropshotData {
+    pub tile_frames: HashMap<u32, Vec<u8>>,
+    pub damage_events: HashMap<usize, DropshotDamageEvent>,
+}
+
+impl DropshotData {
+    pub fn new() -> Self {
+        DropshotData {
+            tile_frames: HashMap::new(),
+            damage_events: HashMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DropshotDamageEvent {
+    pub offender: i32,
+    pub tiles: Vec<DropshotTile>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DropshotTile {
+    pub tile_id: u32,
+    pub state: u8,
+    pub direct_hit: bool,
 }

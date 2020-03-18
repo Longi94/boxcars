@@ -2,6 +2,7 @@ mod ball;
 mod boost;
 mod camera;
 mod car;
+mod dropshot;
 mod game_event;
 mod game_info;
 mod jump;
@@ -23,6 +24,7 @@ use crate::frame_parser::boost::{BoostHandler, BoostPickupHandler};
 use crate::frame_parser::game_info::GameInfoHandler;
 use crate::frame_parser::team::TeamHandler;
 use crate::frame_parser::rumble::RumbleItemHandler;
+use crate::frame_parser::dropshot::{PlatformHandler, map_tiles};
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -47,6 +49,13 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
     if object_name.starts_with("Archetypes.SpecialPickups.SpecialPickup_") {
         return Some(Box::new(RumbleItemHandler {}));
     }
+    if object_name.starts_with("ShatterShot_VFX.TheWorld:PersistentLevel.BreakOutActor_Platform_TA_") {
+        let tile_id = match object_name.rfind("_").map(|x| object_name[x + 1..].parse::<u32>().ok()) {
+            Some(id) => id.unwrap(),
+            _ => return None,
+        };
+        return Some(Box::new(PlatformHandler { tile_id: map_tiles(tile_id) }));
+    }
     match object_name.as_ref() {
         "Archetypes.Ball.Ball_Default" => Some(Box::new(BallHandler { ball_type: BallType::Default })),
         "Archetypes.Ball.Ball_Basketball" => Some(Box::new(BallHandler { ball_type: BallType::Basketball })),
@@ -61,8 +70,8 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         "Archetypes.CarComponents.CarComponent_DoubleJump" => Some(Box::new(DoubleJumpHandler {})),
         "Archetypes.CarComponents.CarComponent_Dodge" => Some(Box::new(DodgeHandler {})),
         "Archetypes.CarComponents.CarComponent_Boost" => Some(Box::new(BoostHandler {})),
-        "Archetypes.Teams.Team0" => Some(Box::new(TeamHandler {team: 0})),
-        "Archetypes.Teams.Team1" => Some(Box::new(TeamHandler {team: 1})),
+        "Archetypes.Teams.Team0" => Some(Box::new(TeamHandler { team: 0 })),
+        "Archetypes.Teams.Team1" => Some(Box::new(TeamHandler { team: 1 })),
         _ => None,
     }
 }
