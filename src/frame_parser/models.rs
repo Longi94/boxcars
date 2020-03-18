@@ -252,6 +252,7 @@ pub struct BallData {
     pub ball_type: i32,
     pub rigid_body: RigidBodyFrames,
     pub hit_team_no: Vec<Option<u8>>,
+    pub dropshot_phase: Option<Vec<u8>>,
 }
 
 impl BallData {
@@ -260,6 +261,7 @@ impl BallData {
             ball_type: BallType::Unknown as i32,
             rigid_body: RigidBodyFrames::with_capacity(c),
             hit_team_no: Vec::with_capacity(c),
+            dropshot_phase: None
         };
         data.hit_team_no.resize(c, None);
         data
@@ -537,6 +539,7 @@ impl UserColors {
 pub struct DropshotData {
     pub tile_frames: HashMap<u32, Vec<u8>>,
     pub damage_events: HashMap<usize, DropshotDamageEvent>,
+    pub ball_events: Vec<DropshotBallEvent>,
 }
 
 impl DropshotData {
@@ -544,6 +547,7 @@ impl DropshotData {
         DropshotData {
             tile_frames: HashMap::new(),
             damage_events: HashMap::new(),
+            ball_events: Vec::new(),
         }
     }
 }
@@ -559,4 +563,11 @@ pub struct DropshotTile {
     pub tile_id: u32,
     pub state: u8,
     pub direct_hit: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct DropshotBallEvent {
+    pub state: u8,
+    pub frame_number: usize,
+    pub team: u8,
 }
