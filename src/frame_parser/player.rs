@@ -25,7 +25,10 @@ impl ActorHandler for PlayerHandler {
             Some(attributes) => attributes
         };
 
-        let player_data = data.player_data.get_mut(&actor_id).unwrap();
+        let mut player_data = match data.player_data.get_mut(&actor_id) {
+            Some(player_data) => player_data,
+            _ => return,
+        };
 
         match updated_attr.as_ref() {
             "Engine.PlayerReplicationInfo:Team" => {

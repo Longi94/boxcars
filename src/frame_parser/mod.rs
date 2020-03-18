@@ -1,9 +1,10 @@
 mod ball;
-pub mod models;
+mod camera;
+mod car;
 mod game_event;
+pub mod models;
 mod player;
 mod utils;
-mod car;
 
 use crate::network::frame_parser::FrameState;
 use crate::frame_parser::models::{ParsedFrameData, BallType};
@@ -11,6 +12,7 @@ use crate::frame_parser::game_event::GameEventHandler;
 use crate::frame_parser::ball::BallHandler;
 use crate::frame_parser::player::PlayerHandler;
 use crate::frame_parser::car::CarHandler;
+use crate::frame_parser::camera::CameraSettingsHandler;
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -33,6 +35,7 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         "Archetypes.Ball.Ball_Breakout" => Some(Box::new(BallHandler { ball_type: BallType::Breakout })),
         "TAGame.Default__PRI_TA" => Some(Box::new(PlayerHandler {})),
         "Archetypes.Car.Car_Default" => Some(Box::new(CarHandler {})),
+        "TAGame.Default__CameraSettingsActor_TA" => Some(Box::new(CameraSettingsHandler {})),
         _ => None,
     }
 }

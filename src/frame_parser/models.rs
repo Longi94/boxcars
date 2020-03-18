@@ -1,6 +1,7 @@
 use crate::attributes::RigidBody;
 use std::f32::consts::PI;
 use std::collections::{HashMap, HashSet};
+use crate::CamSettings;
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
@@ -210,6 +211,7 @@ pub struct PlayerData {
     pub accent_color: Option<u8>,
     pub primary_finish: Option<u32>,
     pub accent_finish: Option<u32>,
+    pub camera_settings: Option<CamSettings>
 }
 
 impl PlayerData {
@@ -229,6 +231,7 @@ impl PlayerData {
             accent_color: None,
             primary_finish: None,
             accent_finish: None,
+            camera_settings: None,
         }
     }
 
