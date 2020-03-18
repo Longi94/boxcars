@@ -228,25 +228,26 @@ impl ActorHandler for PlayerHandler {
 }
 
 fn set_paint_values(loadout_paints: &mut Paints, user_colors: &mut UserColors, paints: &Vec<Vec<Product>>, objects: &Vec<String>) {
-    loadout_paints.body = get_paint_value(&paints[0], objects);
-    loadout_paints.decal = get_paint_value(&paints[1], objects);
-    loadout_paints.wheels = get_paint_value(&paints[2], objects);
-    loadout_paints.rocket_trail = get_paint_value(&paints[3], objects);
-    loadout_paints.antenna = get_paint_value(&paints[4], objects);
-    loadout_paints.topper = get_paint_value(&paints[5], objects);
-
-    if paints.len() > 14 {
-        loadout_paints.trail = get_paint_value(&paints[14], objects);
-        loadout_paints.goal_explosion = get_paint_value(&paints[15], objects);
-        loadout_paints.banner = get_paint_value(&paints[16], objects);
-        loadout_paints.avatar_border = get_paint_value(&paints[20], objects);
-        user_colors.banner = get_user_color_value(&paints[16], objects);
-        user_colors.avatar_border = get_user_color_value(&paints[20], objects);
-    }
+    loadout_paints.body = get_paint_value(&paints, 0, objects);
+    loadout_paints.decal = get_paint_value(&paints, 1, objects);
+    loadout_paints.wheels = get_paint_value(&paints, 2, objects);
+    loadout_paints.rocket_trail = get_paint_value(&paints, 3, objects);
+    loadout_paints.antenna = get_paint_value(&paints, 4, objects);
+    loadout_paints.topper = get_paint_value(&paints, 5, objects);
+    loadout_paints.trail = get_paint_value(&paints, 14, objects);
+    loadout_paints.goal_explosion = get_paint_value(&paints, 15, objects);
+    loadout_paints.banner = get_paint_value(&paints, 16, objects);
+    loadout_paints.avatar_border = get_paint_value(&paints, 20, objects);
+    user_colors.banner = get_user_color_value(&paints, 16, objects);
+    user_colors.avatar_border = get_user_color_value(&paints, 20, objects);
 }
 
-fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u32> {
-    for attr in attributes {
+fn get_paint_value(paints: &Vec<Vec<Product>>, index: usize, objects: &Vec<String>) -> Option<u32> {
+    if paints.len() <= index {
+        return None;
+    }
+
+    for attr in &paints[index] {
         let attr_name = match objects.get(attr.object_ind as usize) {
             None => continue,
             Some(attr_name) => attr_name
@@ -266,8 +267,12 @@ fn get_paint_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u
     None
 }
 
-fn get_user_color_value(attributes: &Vec<Product>, objects: &Vec<String>) -> Option<u32> {
-    for attr in attributes {
+fn get_user_color_value(paints: &Vec<Vec<Product>>, index: usize, objects: &Vec<String>) -> Option<u32> {
+    if paints.len() <= index {
+        return None;
+    }
+
+    for attr in &paints[index] {
         let attr_name = match objects.get(attr.object_ind as usize) {
             None => continue,
             Some(attr_name) => attr_name
