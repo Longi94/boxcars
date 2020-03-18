@@ -37,6 +37,10 @@ impl ParsedFrameData {
         for (_, data) in &mut self.player_data {
             data.new_frame(frame, delta);
         }
+        match &mut self.dropshot_data {
+            Some(data) => data.new_frame(frame),
+            _ => {}
+        }
     }
 }
 
@@ -261,7 +265,7 @@ impl BallData {
             ball_type: BallType::Unknown as i32,
             rigid_body: RigidBodyFrames::with_capacity(c),
             hit_team_no: Vec::with_capacity(c),
-            dropshot_phase: None
+            dropshot_phase: None,
         };
         data.hit_team_no.resize(c, None);
         data
@@ -548,6 +552,12 @@ impl DropshotData {
             tile_frames: HashMap::new(),
             damage_events: HashMap::new(),
             ball_events: Vec::new(),
+        }
+    }
+
+    pub fn new_frame(&mut self, frame: usize) {
+        for (_, tile_frames) in &mut self.tile_frames {
+            tile_frames[frame] = tile_frames[frame - 1];
         }
     }
 }
