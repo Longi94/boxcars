@@ -11,8 +11,8 @@ impl ActorHandler for CarHandler {
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
         let attributes = match state.actors.get(&actor_id) {
-            None => return,
-            Some(attributes) => attributes
+            Some(attributes) => attributes,
+            _ => return,
         };
 
         let player_actor_id = match attributes.get("Engine.Pawn:PlayerReplicationInfo") {

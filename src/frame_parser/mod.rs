@@ -2,6 +2,7 @@ mod ball;
 mod camera;
 mod car;
 mod game_event;
+mod jump;
 pub mod models;
 mod player;
 mod utils;
@@ -13,6 +14,7 @@ use crate::frame_parser::ball::BallHandler;
 use crate::frame_parser::player::PlayerHandler;
 use crate::frame_parser::car::CarHandler;
 use crate::frame_parser::camera::CameraSettingsHandler;
+use crate::frame_parser::jump::{JumpHandler, DoubleJumpHandler, DodgeHandler};
 
 pub trait ActorHandler {
     fn create(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32);
@@ -36,6 +38,9 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         "TAGame.Default__PRI_TA" => Some(Box::new(PlayerHandler {})),
         "Archetypes.Car.Car_Default" => Some(Box::new(CarHandler {})),
         "TAGame.Default__CameraSettingsActor_TA" => Some(Box::new(CameraSettingsHandler {})),
+        "Archetypes.CarComponents.CarComponent_Jump" => Some(Box::new(JumpHandler {})),
+        "Archetypes.CarComponents.CarComponent_DoubleJump" => Some(Box::new(DoubleJumpHandler {})),
+        "Archetypes.CarComponents.CarComponent_Dodge" => Some(Box::new(DodgeHandler {})),
         _ => None,
     }
 }

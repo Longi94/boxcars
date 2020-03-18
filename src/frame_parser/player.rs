@@ -21,8 +21,8 @@ impl ActorHandler for PlayerHandler {
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _: &Vec<String>) {
         let attributes = match state.actors.get(&actor_id) {
-            None => return,
-            Some(attributes) => attributes
+            Some(attributes) => attributes,
+            _ => return,
         };
 
         let mut player_data = match data.player_data.get_mut(&actor_id) {

@@ -211,7 +211,10 @@ pub struct PlayerData {
     pub accent_color: Option<u8>,
     pub primary_finish: Option<u32>,
     pub accent_finish: Option<u32>,
-    pub camera_settings: Option<CamSettings>
+    pub camera_settings: Option<CamSettings>,
+    pub jump_active: Vec<Option<u8>>,
+    pub double_jump_active: Vec<Option<u8>>,
+    pub dodge_active: Vec<Option<u8>>,
 }
 
 impl PlayerData {
@@ -227,6 +230,9 @@ impl PlayerData {
             throttle: Vec::with_capacity(c),
             steer: Vec::with_capacity(c),
             handbrake: Vec::with_capacity(c),
+            jump_active: Vec::with_capacity(c),
+            double_jump_active: Vec::with_capacity(c),
+            dodge_active: Vec::with_capacity(c),
             primary_color: None,
             accent_color: None,
             primary_finish: None,
@@ -241,6 +247,9 @@ impl PlayerData {
         self.throttle.push(self.throttle.last().unwrap_or(&None).clone());
         self.steer.push(self.steer.last().unwrap_or(&None).clone());
         self.handbrake.push(self.handbrake.last().unwrap_or(&None).clone());
+        self.jump_active.push(self.jump_active.last().unwrap_or(&None).clone());
+        self.double_jump_active.push(self.double_jump_active.last().unwrap_or(&None).clone());
+        self.dodge_active.push(self.dodge_active.last().unwrap_or(&None).clone());
         match &mut self.time_till_power_up {
             Some(arr) => arr.push(arr.last().unwrap_or(&None).clone()),
             None => {}

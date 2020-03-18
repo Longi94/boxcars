@@ -12,8 +12,8 @@ impl ActorHandler for GameEventHandler {
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
               actor_id: i32, updated_attr: &String, _: &Vec<String>) {
         let attributes = match state.actors.get(&actor_id) {
-            None => return,
-            Some(attributes) => attributes
+            Some(attributes) => attributes,
+            _ => return,
         };
 
         match updated_attr.as_ref() {
