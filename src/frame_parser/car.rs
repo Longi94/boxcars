@@ -52,9 +52,17 @@ impl ActorHandler for CarHandler {
                     if demolish.attacker.0 == -1 || demolish.victim.0 == -1 {
                         return;
                     }
+                    let attacker_player_id = match state.car_player_map.get(&demolish.attacker.0) {
+                        Some(id) => id,
+                        _ => return,
+                    };
+                    let victim_player_id = match state.car_player_map.get(&demolish.victim.0) {
+                        Some(id) => id,
+                        _ => return,
+                    };
                     data.demos.push(Demolition {
-                        attacker_player_id: demolish.attacker.0,
-                        victim_player_id: demolish.victim.0,
+                        attacker_player_id: attacker_player_id.clone(),
+                        victim_player_id: victim_player_id.clone(),
                         attack_velocity: demolish.attack_velocity.clone(),
                         victim_velocity: demolish.victim_velocity.clone(),
                         frame_number: state.frame.clone(),
