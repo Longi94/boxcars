@@ -82,6 +82,8 @@ impl ActorHandler for PlayerHandler {
                     _ => return,
                 };
 
+                player_data.party_leader = Some(leader_id.clone());
+
                 if !data.parties.contains_key(&leader_id) {
                     data.parties.insert(leader_id.clone(), HashSet::new());
                 }
@@ -90,6 +92,30 @@ impl ActorHandler for PlayerHandler {
                     Some(id) => {
                         data.parties.get_mut(&leader_id).unwrap().insert(id);
                     },
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:MatchScore" => {
+                match attributes.get("TAGame.PRI_TA:MatchScore") {
+                    Some(Attribute::Int(score)) => player_data.match_score = Some(score.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:Title" => {
+                match attributes.get("TAGame.PRI_TA:Title") {
+                    Some(Attribute::Int(title)) => player_data.title = Some(title.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:TotalXP" => {
+                match attributes.get("TAGame.PRI_TA:TotalXP") {
+                    Some(Attribute::Int(total_xp)) => player_data.total_xp = Some(total_xp.clone()),
+                    _ => return,
+                }
+            }
+            "TAGame.PRI_TA:SteeringSensitivity" => {
+                match attributes.get("TAGame.PRI_TA:SteeringSensitivity") {
+                    Some(Attribute::Float(sens)) => player_data.steering_sensitivity = Some(sens.clone()),
                     _ => return,
                 }
             }
