@@ -1,12 +1,13 @@
 use crate::attributes::RigidBody;
 use std::f32::consts::PI;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct ParsedFrameData {
     pub frames_data: FramesData,
     pub ball_data: BallData,
     pub player_data: HashMap<i32, PlayerData>,
+    pub parties: HashMap<String, HashSet<String>>,
 }
 
 impl ParsedFrameData {
@@ -15,6 +16,7 @@ impl ParsedFrameData {
             frames_data: FramesData::with_capacity(c),
             ball_data: BallData::with_capacity(c),
             player_data: HashMap::new(),
+            parties: HashMap::new(),
         }
     }
 
@@ -188,6 +190,7 @@ impl BallData {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct PlayerData {
+    pub remote_id: Option<String>,
     pub name: Option<String>,
     pub team_actor: i32,
     pub ping: Vec<Option<u8>>,
@@ -198,6 +201,7 @@ pub struct PlayerData {
 impl PlayerData {
     pub fn with_capacity(c: usize) -> Self {
         PlayerData {
+            remote_id: None,
             name: None,
             team_actor: -1,
             ping: Vec::with_capacity(c),

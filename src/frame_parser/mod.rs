@@ -2,6 +2,7 @@ mod ball;
 pub mod models;
 mod game_event;
 mod player;
+mod utils;
 
 use crate::network::frame_parser::FrameState;
 use crate::frame_parser::models::{ParsedFrameData, BallType};
