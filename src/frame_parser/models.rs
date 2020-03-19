@@ -75,6 +75,8 @@ pub struct FramesData {
     pub replicated_seconds_remaining: Vec<Option<i32>>,
     pub is_overtime: Vec<Option<bool>>,
     pub ball_has_been_hit: Vec<Option<bool>>,
+    pub kickoff_frames: Vec<usize>,
+    pub first_touch_frames: Vec<usize>
 }
 
 impl FramesData {
@@ -86,6 +88,8 @@ impl FramesData {
             replicated_seconds_remaining: Vec::with_capacity(c),
             is_overtime: Vec::with_capacity(c),
             ball_has_been_hit: Vec::with_capacity(c),
+            kickoff_frames: Vec::new(),
+            first_touch_frames: Vec::new(),
         };
 
         data.time.resize(c, 0.0);
