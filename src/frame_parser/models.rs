@@ -176,7 +176,7 @@ impl RigidBodyFrames {
 
         let sinp = 2.0 * (rb.rotation.w * rb.rotation.y - rb.rotation.z * rb.rotation.x);
 
-        let pitch = if sinp.abs() > 1.0 {
+        let pitch = if sinp.abs() >= 1.0 {
             (PI / 2.0).copysign(sinp)
         } else {
             sinp.asin()
