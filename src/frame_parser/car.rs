@@ -15,6 +15,33 @@ impl ActorHandler for CarHandler {
             _ => return,
         };
 
+        if updated_attr == "TAGame.Car_TA:ReplicatedDemolish" {
+            match attributes.get("TAGame.Car_TA:ReplicatedDemolish") {
+                Some(Attribute::Demolish(demolish)) => {
+                    if demolish.attacker.0 == -1 || demolish.victim.0 == -1 {
+                        return;
+                    }
+                    let attacker_player_id = match state.car_player_map.get(&demolish.attacker.0) {
+                        Some(id) => id,
+                        _ => return,
+                    };
+                    let victim_player_id = match state.car_player_map.get(&demolish.victim.0) {
+                        Some(id) => id,
+                        _ => return,
+                    };
+                    data.demos.push(Demolition {
+                        attacker_player_id: attacker_player_id.clone(),
+                        victim_player_id: victim_player_id.clone(),
+                        attack_velocity: demolish.attack_velocity.clone(),
+                        victim_velocity: demolish.victim_velocity.clone(),
+                        frame_number: state.frame.clone(),
+                    })
+                }
+                _ => return,
+            }
+            return;
+        }
+
         let player_actor_id = match attributes.get("Engine.Pawn:PlayerReplicationInfo") {
             Some(Attribute::ActiveActor(actor)) => actor.actor.0.clone(),
             _ => return,
@@ -46,29 +73,6 @@ impl ActorHandler for CarHandler {
             "TAGame.Vehicle_TA:bReplicatedHandbrake" => match attributes.get("TAGame.Vehicle_TA:bReplicatedHandbrake") {
                 Some(Attribute::Boolean(bool)) => player_data.handbrake[state.frame] = Some(bool.clone()),
                 _ => return
-            }
-            "TAGame.Car_TA:ReplicatedDemolish" => match attributes.get("TAGame.Car_TA:ReplicatedDemolish") {
-                Some(Attribute::Demolish(demolish)) => {
-                    if demolish.attacker.0 == -1 || demolish.victim.0 == -1 {
-                        return;
-                    }
-                    let attacker_player_id = match state.car_player_map.get(&demolish.attacker.0) {
-                        Some(id) => id,
-                        _ => return,
-                    };
-                    let victim_player_id = match state.car_player_map.get(&demolish.victim.0) {
-                        Some(id) => id,
-                        _ => return,
-                    };
-                    data.demos.push(Demolition {
-                        attacker_player_id: attacker_player_id.clone(),
-                        victim_player_id: victim_player_id.clone(),
-                        attack_velocity: demolish.attack_velocity.clone(),
-                        victim_velocity: demolish.victim_velocity.clone(),
-                        frame_number: state.frame.clone(),
-                    })
-                }
-                _ => return,
             }
             "TAGame.Car_TA:TeamPaint" => match attributes.get("TAGame.Car_TA:TeamPaint") {
                 Some(Attribute::TeamPaint(team_paint)) => {
