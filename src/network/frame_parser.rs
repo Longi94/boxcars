@@ -270,6 +270,13 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 
                     // Create new actors, get handlers if any
                     for new_actor in &frame.new_actors {
+                        if actors_handlers.contains_key(&new_actor.actor_id.0) {
+                            match actors_handlers.remove(&new_actor.actor_id.0) {
+                                Some(handler) => handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0),
+                                _ => {}
+                            }
+                        }
+
                         state.actors.insert(new_actor.actor_id.0, HashMap::new());
                         let object_name = match self.objects.get(new_actor.object_id.0 as usize) {
                             None => continue,
@@ -281,13 +288,6 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                             None => continue,
                             Some(handler) => handler
                         };
-
-                        if actors_handlers.contains_key(&new_actor.actor_id.0) {
-                            match actors_handlers.remove(&new_actor.actor_id.0) {
-                                Some(handler) => handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0),
-                                _ => {}
-                            }
-                        }
 
                         handler.create(&mut frames_data, &mut state, new_actor.actor_id.0);
                         actors_handlers.insert(new_actor.actor_id.0, handler);

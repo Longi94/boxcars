@@ -52,9 +52,7 @@ impl ActorHandler for CarHandler {
             _ => return,
         };
 
-        if !state.car_player_map.contains_key(&actor_id) {
-            state.car_player_map.insert(actor_id, player_actor_id);
-        }
+        state.car_player_map.insert(actor_id, player_actor_id);
 
         match updated_attr.as_ref() {
             "TAGame.RBActor_TA:ReplicatedRBState" => match attributes.get("TAGame.RBActor_TA:ReplicatedRBState") {
@@ -88,21 +86,7 @@ impl ActorHandler for CarHandler {
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
-        }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
+        let player_actor_id = match state.car_player_map.get(&actor_id) {
             Some(id) => id,
             _ => return
         };
