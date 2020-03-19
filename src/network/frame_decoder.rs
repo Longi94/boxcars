@@ -22,7 +22,7 @@ pub(crate) struct FrameDecoder<'a, 'b: 'a> {
 }
 
 #[derive(Debug)]
-enum DecodedFrame {
+pub enum DecodedFrame {
     EndFrame,
     Frame(Frame),
 }
@@ -60,7 +60,7 @@ impl<'a, 'b> FrameDecoder<'a, 'b> {
         }
     }
 
-    fn decode_frame(
+    pub fn decode_frame(
         &self,
         attr_decoder: &AttributeDecoder,
         mut bits: &mut BitGet<'_>,

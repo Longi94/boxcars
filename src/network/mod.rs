@@ -214,33 +214,26 @@ pub(crate) fn parse<'a>(
             return Err(NetworkError::TooManyFrames(frame_len));
         }
 
+        let frame_decoder = FrameDecoder {
+            frames_len: frame_len as usize,
+            product_decoder,
+            max_channels,
+            channel_bits,
+            body,
+            spawns: &spawns,
+            object_ind_attributes,
+            version,
+            is_lan,
+        };
+
         if parse_frames {
             let frame_parser = FrameParser {
-                frames_len: frame_len as usize,
-                product_decoder,
-                max_channels,
-                channel_bits,
-                body,
-                spawns: &spawns,
-                object_ind_attributes,
-                version,
-                is_lan,
+                frame_decoder: &frame_decoder,
                 objects: &body.objects,
             };
             let data = frame_parser.decode_frames().unwrap();
             Ok(NetworkFrames { frames: Vec::new(), parsed: Some(data) })
         } else {
-            let frame_decoder = FrameDecoder {
-                frames_len: frame_len as usize,
-                product_decoder,
-                max_channels,
-                channel_bits,
-                body,
-                spawns: &spawns,
-                object_ind_attributes,
-                version,
-                is_lan,
-            };
             Ok(NetworkFrames {
                 frames: frame_decoder.decode_frames()?,
                 parsed: None,
