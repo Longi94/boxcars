@@ -326,7 +326,7 @@ pub struct PlayerData {
     pub jump_active: Vec<u8>,
     pub double_jump_active: Vec<u8>,
     pub dodge_active: Vec<u8>,
-    pub boost_active: Vec<u8>,
+    pub boost_active: Vec<bool>,
     pub boost: Vec<Option<f32>>,
     pub boost_collect: Vec<bool>,
     pub loadout: Loadouts,
@@ -385,7 +385,7 @@ impl PlayerData {
         data.jump_active.resize(c, 0);
         data.double_jump_active.resize(c, 0);
         data.dodge_active.resize(c, 0);
-        data.boost_active.resize(c, 0);
+        data.boost_active.resize(c, false);
         data.boost.resize(c, None);
         data.boost_collect.resize(c, false);
         data.power_up_active.resize(c, None);
@@ -408,7 +408,7 @@ impl PlayerData {
             self.power_up_active[frame] = self.power_up_active[frame - 1].clone();
             self.power_up[frame] = self.power_up[frame - 1].clone();
 
-            if self.boost_active[frame - 1] % 2 == 1 {
+            if self.boost_active[frame - 1] {
                 self.boost[frame] = Some((self.boost[frame - 1].unwrap_or(0.0) -
                     delta * BOOST_PER_SECOND).max(0.0));
             } else {

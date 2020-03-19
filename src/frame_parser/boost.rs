@@ -32,11 +32,12 @@ impl ActorHandler for BoostHandler {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
                     Some(Attribute::Byte(b)) => {
-                        if b % 2 == 1 && player_data.boost[state.frame - 1].is_some() {
+                        let active = b % 2 == 1;
+                        if active && player_data.boost[state.frame - 1].is_some() {
                             player_data.boost[state.frame] =
                                 Some((player_data.boost[state.frame - 1].unwrap() - state.delta * BOOST_PER_SECOND).max(0.0))
                         }
-                        player_data.boost_active[state.frame] = b.clone();
+                        player_data.boost_active[state.frame] = active;
                     }
                     _ => return,
                 }
@@ -145,7 +146,7 @@ impl ActorHandler for BoostPickupHandler {
             _ => return,
         };
 
-        player_data.boost_active[state.frame] = 0;
+        player_data.boost_active[state.frame] = false;
         player_data.boost[state.frame] = None;
         player_data.boost_collect[state.frame] = false;
     }

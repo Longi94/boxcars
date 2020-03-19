@@ -30,6 +30,12 @@ impl ActorHandler for RumbleItemHandler {
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:Vehicle" => {
                 player_data.power_up_active[state.frame] = Some(false);
+                let item_name = match state.actor_objects.get(&actor_id)
+                    .map(|x| x.replace("Archetypes.SpecialPickups.SpecialPickup_", "")) {
+                    Some(item_name) => item_name,
+                    _ => return,
+                };
+                player_data.power_up[state.frame] = Some(item_name);
             }
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
