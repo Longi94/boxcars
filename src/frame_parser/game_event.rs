@@ -35,6 +35,8 @@ impl ActorHandler for GameEventHandler {
                         if state.frame > 0 && time.clone() == 0 &&
                             data.frames_data.replicated_seconds_remaining[state.frame - 1].unwrap_or(0) == 3 {
                             data.frames_data.kickoff_frames.push(state.frame);
+                            state.is_kickoff = true;
+                            state.is_after_goal = false;
                         }
                     }
                     _ => return
@@ -47,6 +49,7 @@ impl ActorHandler for GameEventHandler {
                         if state.frame > 0 && b.clone() &&
                             !data.frames_data.ball_has_been_hit[state.frame - 1].unwrap_or(false) {
                             data.frames_data.first_touch_frames.push(state.frame);
+                            state.is_kickoff = false;
                         }
                     }
                     _ => return

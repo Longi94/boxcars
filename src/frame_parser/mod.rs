@@ -47,7 +47,8 @@ pub fn get_handler(object_name: &String) -> Option<Box<dyn ActorHandler>> {
         return Some(Box::new(GameInfoHandler {}));
     }
     if object_name.starts_with("Archetypes.SpecialPickups.SpecialPickup_") {
-        return Some(Box::new(RumbleItemHandler {}));
+        let item_name = object_name.replace("Archetypes.SpecialPickups.SpecialPickup_", "");
+        return Some(Box::new(RumbleItemHandler { item_name }));
     }
     if object_name.starts_with("ShatterShot_VFX.TheWorld:PersistentLevel.BreakOutActor_Platform_TA_") {
         let tile_id = match object_name.rfind("_").map(|x| object_name[x + 1..].parse::<u32>().ok()) {

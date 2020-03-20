@@ -230,6 +230,7 @@ pub(crate) fn parse<'a>(
             let frame_parser = FrameParser {
                 frame_decoder: &frame_decoder,
                 objects: &body.objects,
+                header: &header
             };
             let data = frame_parser.decode_frames().unwrap();
             Ok(NetworkFrames { frames: Vec::new(), parsed: Some(data) })

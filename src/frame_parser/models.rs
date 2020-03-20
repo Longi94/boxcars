@@ -76,7 +76,7 @@ pub struct FramesData {
     pub is_overtime: Vec<Option<bool>>,
     pub ball_has_been_hit: Vec<Option<bool>>,
     pub kickoff_frames: Vec<usize>,
-    pub first_touch_frames: Vec<usize>
+    pub first_touch_frames: Vec<usize>,
 }
 
 impl FramesData {
@@ -338,6 +338,7 @@ pub struct PlayerData {
     pub loadout_user_colors: LoadoutUserColors,
     pub power_up_active: Vec<Option<bool>>,
     pub power_up: Vec<Option<String>>,
+    pub rumble_item_events: Vec<RumbleItemEvent>,
 }
 
 impl PlayerData {
@@ -379,6 +380,7 @@ impl PlayerData {
             primary_finish: 270,
             accent_finish: 270,
             camera_settings: None,
+            rumble_item_events: Vec::new(),
         };
 
         data.ping.resize(c, None);
@@ -584,4 +586,12 @@ pub struct DropshotBallEvent {
     pub state: u8,
     pub frame_number: usize,
     pub team: u8,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct RumbleItemEvent {
+    pub player_actor_id: i32,
+    pub frame_get: usize,
+    pub frame_use: Option<usize>,
+    pub item_name: String,
 }

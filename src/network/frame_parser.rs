@@ -9,10 +9,12 @@ use crate::Attribute;
 use crate::frame_parser::models::ParsedFrameData;
 use crate::frame_parser::{ActorHandler, get_handler};
 use crate::network::frame_decoder::{FrameDecoder, DecodedFrame};
+use crate::header::Header;
 
 pub(crate) struct FrameParser<'a, 'b: 'a> {
     pub frame_decoder: &'a FrameDecoder<'a, 'b>,
     pub objects: &'a Vec<String>,
+    pub header: &'a Header,
 }
 
 impl<'a, 'b> FrameParser<'a, 'b> {
@@ -28,6 +30,20 @@ impl<'a, 'b> FrameParser<'a, 'b> {
         let mut state = FrameState::new();
         let mut actors_handlers: HashMap<i32, Box<dyn ActorHandler>> = HashMap::new();
         state.total_frames = self.frame_decoder.frames_len;
+
+        let goal_props = self.header.properties.iter()
+            .find(|&(key,_)| key == "Goals")
+            .and_then(|&(_, ref prop)| prop.as_array())
+            .unwrap();
+
+        let goal_frames: Vec<usize> = goal_props.iter()
+            .map(|x| x.iter()
+                .find(|&(key,_)| key == "frame")
+                .and_then(|&(_, ref prop)| prop.as_i32())
+                .unwrap() as usize
+            )
+            .collect();
+        let mut current_goal: usize = 0;
 
         while !bits.is_empty() && state.frame < self.frame_decoder.frames_len {
             let frame = self.frame_decoder
@@ -72,6 +88,13 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                     state.delta = frame.delta;
                     state.time = frame.time;
                     frames_data.new_frame(state.frame, frame.time, frame.delta);
+
+                    if state.frame > 0 && current_goal < goal_frames.len() &&
+                        goal_frames[current_goal] == state.frame - 1 {
+                        state.is_after_goal = true;
+                        state.is_kickoff = false;
+                        current_goal += 1;
+                    }
 
                     // Remove deleted actors
                     for deleted in &frame.deleted_actors {
@@ -161,6 +184,9 @@ pub struct FrameState {
     pub actors: HashMap<i32, HashMap<String, Attribute>>,
     pub actor_objects: HashMap<i32, String>,
     pub car_player_map: HashMap<i32, i32>,
+
+    pub is_kickoff: bool,
+    pub is_after_goal: bool,
 }
 
 impl FrameState {
@@ -173,6 +199,12 @@ impl FrameState {
             actors: HashMap::new(),
             actor_objects: HashMap::new(),
             car_player_map: HashMap::new(),
+            is_kickoff: false,
+            is_after_goal: true,
         }
+    }
+
+    pub fn should_collect_stats(&self) -> bool {
+        !self.is_after_goal
     }
 }

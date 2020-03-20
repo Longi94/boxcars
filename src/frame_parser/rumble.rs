@@ -1,14 +1,15 @@
 use crate::frame_parser::ActorHandler;
-use crate::frame_parser::models::ParsedFrameData;
+use crate::frame_parser::models::{ParsedFrameData, RumbleItemEvent};
 use crate::network::frame_parser::FrameState;
 use crate::frame_parser::utils::get_cars_player_actor_id;
 use crate::Attribute;
 
-pub struct RumbleItemHandler {}
+pub struct RumbleItemHandler {
+    pub item_name: String,
+}
 
 impl ActorHandler for RumbleItemHandler {
-    fn create(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
-    }
+    fn create(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {}
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
@@ -30,24 +31,37 @@ impl ActorHandler for RumbleItemHandler {
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:Vehicle" => {
                 player_data.power_up_active[state.frame] = Some(false);
-                let item_name = match state.actor_objects.get(&actor_id)
-                    .map(|x| x.replace("Archetypes.SpecialPickups.SpecialPickup_", "")) {
-                    Some(item_name) => item_name,
-                    _ => return,
-                };
-                player_data.power_up[state.frame] = Some(item_name);
+                player_data.power_up[state.frame] = Some(self.item_name.clone());
+
+                // Rumble item get event
+                if player_data.power_up_active[state.frame - 1].is_none() {
+                    player_data.rumble_item_events.push(RumbleItemEvent {
+                        item_name: self.item_name.clone(),
+                        frame_get: state.frame,
+                        frame_use: None,
+                        player_actor_id,
+                    })
+                }
             }
             "TAGame.CarComponent_TA:ReplicatedActive" => {
                 match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
                     Some(Attribute::Byte(b)) => {
-                        let item_name = match state.actor_objects.get(&actor_id)
-                            .map(|x| x.replace("Archetypes.SpecialPickups.SpecialPickup_", "")) {
-                            Some(item_name) => item_name,
-                            _ => return,
-                        };
-                        player_data.power_up[state.frame] = Some(item_name);
-                        player_data.power_up_active[state.frame] = Some(b % 2 == 1);
-                    },
+                        let active = b % 2 == 1;
+                        player_data.power_up[state.frame] = Some(self.item_name.clone());
+                        player_data.power_up_active[state.frame] = Some(active.clone());
+
+                        if !state.should_collect_stats() || state.frame == 0 {
+                            return;
+                        }
+
+                        if !player_data.power_up_active[state.frame - 1].unwrap() && active {
+                            // Rumble item use event
+                            match player_data.rumble_item_events.last_mut() {
+                                Some(event) => event.frame_use = Some(state.frame),
+                                _ => {}
+                            };
+                        }
+                    }
                     _ => return,
                 }
             }
@@ -79,6 +93,17 @@ impl ActorHandler for RumbleItemHandler {
             Some(player_data) => player_data,
             _ => return,
         };
+
+        // When a spiked ball is frozen, there is not 'ball_freeze,True' row,
+        // it just gets deleted immediately
+        // Could also happen when the freeze is immediately broken
+        // in theory this should not happen with other power ups?
+        if self.item_name == "BallFreeze" && !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+            match player_data.rumble_item_events.last_mut() {
+                Some(event) => event.frame_use = Some(state.frame),
+                _ => {}
+            };
+        }
 
         player_data.power_up[state.frame] = None;
         player_data.power_up_active[state.frame] = None;
