@@ -13,20 +13,9 @@ impl ActorHandler for RumbleItemHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_actor_id = try_opt!(get_cars_player_actor_id(&attributes, state));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
 
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:Vehicle" => {
@@ -52,23 +41,20 @@ impl ActorHandler for RumbleItemHandler {
                 }
             }
             "TAGame.CarComponent_TA:ReplicatedActive" => {
-                match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => {
-                        let active = b % 2 == 1;
-                        player_data.power_up[state.frame] = Some(self.item_name.clone());
-                        player_data.power_up_active[state.frame] = Some(active.clone());
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
+                    let active = b % 2 == 1;
+                    player_data.power_up[state.frame] = Some(self.item_name.clone());
+                    player_data.power_up_active[state.frame] = Some(active.clone());
 
-                        if !state.should_collect_stats() || state.frame == 0 {
-                            return;
-                        }
-
-                        if !player_data.power_up_active[state.frame - 1].unwrap_or(false) && active {
-                            // Rumble item use event
-                            player_data.rumble_item_events.last_mut().map(|mut event|
-                                event.frame_use = Some(state.frame));
-                        }
+                    if !state.should_collect_stats() || state.frame == 0 {
+                        return;
                     }
-                    _ => return,
+
+                    if !player_data.power_up_active[state.frame - 1].unwrap_or(false) && active {
+                        // Rumble item use event
+                        player_data.rumble_item_events.last_mut().map(|mut event|
+                            event.frame_use = Some(state.frame));
+                    }
                 }
             }
             _ => return,
@@ -76,45 +62,30 @@ impl ActorHandler for RumbleItemHandler {
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
+        if_chain! {
+            if let Some(attributes) = state.actors.get(&actor_id);
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle");
+            if actor.actor.0 != -1;
+            if let Some(player_actor_id) = state.car_player_map.get(&actor.actor.0);
+            if let Some(player_data) = data.player_data.get_mut(&player_actor_id);
+            then {
+                // When a spiked ball is frozen, there is not 'ball_freeze,True' row,
+                // it just gets deleted immediately
+                // Could also happen when the freeze is immediately broken
+                // in theory this should not happen with other power ups?
+                if state.should_collect_stats() {
+                    if self.item_name == "BallFreeze" &&
+                        !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+                        player_data.rumble_item_events.last_mut()
+                            .map(|mut event| event.frame_use = Some(state.frame));
+                    }
+                } else {
+                    player_data.rumble_item_events.last_mut().map(|mut event| event.demoed = false);
+                }
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
-        }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        // When a spiked ball is frozen, there is not 'ball_freeze,True' row,
-        // it just gets deleted immediately
-        // Could also happen when the freeze is immediately broken
-        // in theory this should not happen with other power ups?
-        if state.should_collect_stats() {
-            if self.item_name == "BallFreeze" &&
-                !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
-                player_data.rumble_item_events.last_mut()
-                    .map(|mut event| event.frame_use = Some(state.frame));
+                player_data.power_up[state.frame] = None;
+                player_data.power_up_active[state.frame] = None;
             }
-        } else {
-            player_data.rumble_item_events.last_mut().map(|mut event| event.demoed = false);
         }
-
-        player_data.power_up[state.frame] = None;
-        player_data.power_up_active[state.frame] = None;
     }
 }

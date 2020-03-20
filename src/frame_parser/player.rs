@@ -20,50 +20,33 @@ impl ActorHandler for PlayerHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_data = match data.player_data.get_mut(&actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_data = try_opt!(data.player_data.get_mut(&actor_id));
         match updated_attr.as_ref() {
             "Engine.PlayerReplicationInfo:Team" => {
-                match attributes.get("Engine.PlayerReplicationInfo:Team") {
-                    Some(Attribute::ActiveActor(actor)) => {
-                        if actor.actor.0 != -1 {
-                            player_data.team_actor = actor.actor.0;
-                        }
+                if let Some(Attribute::ActiveActor(actor)) = attributes.get("Engine.PlayerReplicationInfo:Team") {
+                    if actor.actor.0 != -1 {
+                        player_data.team_actor = actor.actor.0;
                     }
-                    _ => return,
-                };
+                }
             }
             "Engine.PlayerReplicationInfo:PlayerName" => {
-                match attributes.get("Engine.PlayerReplicationInfo:PlayerName") {
-                    Some(Attribute::String(name)) => player_data.name = Some(name.clone()),
-                    _ => return,
-                };
+                if let Some(Attribute::String(name)) = attributes.get("Engine.PlayerReplicationInfo:PlayerName") {
+                    player_data.name = Some(name.clone());
+                }
             }
             "Engine.PlayerReplicationInfo:UniqueId" => {
-                match get_remote_id(attributes, "Engine.PlayerReplicationInfo:UniqueId") {
-                    Some(id) => player_data.remote_id = Some(id),
-                    _ => return,
-                };
+                player_data.remote_id = get_remote_id(attributes, "Engine.PlayerReplicationInfo:UniqueId");
             }
             "Engine.PlayerReplicationInfo:Ping" => {
-                match attributes.get("Engine.PlayerReplicationInfo:Ping") {
-                    Some(Attribute::Byte(ping)) => player_data.ping[state.frame] = Some(ping.clone()),
-                    _ => return,
-                };
+                if let Some(Attribute::Byte(ping)) = attributes.get("Engine.PlayerReplicationInfo:Ping") {
+                    player_data.ping[state.frame] = Some(ping.clone());
+                }
             }
             "TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera" => {
-                match attributes.get("TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera") {
-                    Some(Attribute::Boolean(ball_cam)) => player_data.ball_cam[state.frame] = Some(ball_cam.clone()),
-                    _ => return,
-                };
+                if let Some(Attribute::Boolean(ball_cam)) = attributes.get("TAGame.CameraSettingsActor_TA:bUsingSecondaryCamera") {
+                    player_data.ball_cam[state.frame] = Some(ball_cam.clone());
+                }
             }
             "TAGame.PRI_TA:TimeTillItem" => {
                 if player_data.time_till_power_up.is_none() {
@@ -72,17 +55,13 @@ impl ActorHandler for PlayerHandler {
                     player_data.time_till_power_up = Some(vec);
                 }
 
-                match attributes.get("TAGame.PRI_TA:TimeTillItem") {
-                    Some(Attribute::Int(time)) => player_data.time_till_power_up.as_mut()
-                        .unwrap()[state.frame] = Some(time.clone()),
-                    _ => return,
-                };
+                if let Some(Attribute::Int(time)) = attributes.get("TAGame.PRI_TA:TimeTillItem") {
+                    player_data.time_till_power_up.as_mut()
+                        .unwrap()[state.frame] = Some(time.clone());
+                }
             }
             "TAGame.PRI_TA:PartyLeader" => {
-                let leader_id = match get_remote_id(attributes, "TAGame.PRI_TA:PartyLeader") {
-                    Some(leader_id) => leader_id,
-                    _ => return,
-                };
+                let leader_id = try_opt!(get_remote_id(attributes, "TAGame.PRI_TA:PartyLeader"));
 
                 player_data.party_leader = Some(leader_id.clone());
 
@@ -90,103 +69,81 @@ impl ActorHandler for PlayerHandler {
                     data.parties.insert(leader_id.clone(), HashSet::new());
                 }
 
-                match get_remote_id(attributes, "Engine.PlayerReplicationInfo:UniqueId") {
-                    Some(id) => {
-                        data.parties.get_mut(&leader_id).unwrap().insert(id);
-                    }
-                    _ => return,
+                if let Some(id) = get_remote_id(attributes, "Engine.PlayerReplicationInfo:UniqueId") {
+                    data.parties.get_mut(&leader_id).unwrap().insert(id);
                 }
             }
             "TAGame.PRI_TA:MatchScore" => {
-                match attributes.get("TAGame.PRI_TA:MatchScore") {
-                    Some(Attribute::Int(score)) => player_data.match_score = score.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(score)) = attributes.get("TAGame.PRI_TA:MatchScore") {
+                    player_data.match_score = score.clone();
                 }
             }
             "TAGame.PRI_TA:MatchGoals" => {
-                match attributes.get("TAGame.PRI_TA:MatchGoals") {
-                    Some(Attribute::Int(goals)) => player_data.goals = goals.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(goals)) = attributes.get("TAGame.PRI_TA:MatchGoals") {
+                    player_data.goals = goals.clone();
                 }
             }
             "TAGame.PRI_TA:MatchAssists" => {
-                match attributes.get("TAGame.PRI_TA:MatchAssists") {
-                    Some(Attribute::Int(assists)) => player_data.assists = assists.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(assists)) = attributes.get("TAGame.PRI_TA:MatchAssists") {
+                    player_data.assists = assists.clone();
                 }
             }
             "TAGame.PRI_TA:MatchSaves" => {
-                match attributes.get("TAGame.PRI_TA:MatchSaves") {
-                    Some(Attribute::Int(saves)) => player_data.saves = saves.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(saves)) = attributes.get("TAGame.PRI_TA:MatchSaves") {
+                    player_data.saves = saves.clone();
                 }
             }
             "TAGame.PRI_TA:MatchShots" => {
-                match attributes.get("TAGame.PRI_TA:MatchShots") {
-                    Some(Attribute::Int(shots)) => player_data.shots = shots.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(shots)) = attributes.get("TAGame.PRI_TA:MatchShots") {
+                    player_data.shots = shots.clone();
                 }
             }
             "TAGame.PRI_TA:Title" => {
-                match attributes.get("TAGame.PRI_TA:Title") {
-                    Some(Attribute::Int(title)) => player_data.title = Some(title.clone()),
-                    _ => return,
+                if let Some(Attribute::Int(title)) = attributes.get("TAGame.PRI_TA:Title") {
+                    player_data.title = Some(title.clone());
                 }
             }
             "TAGame.PRI_TA:TotalXP" => {
-                match attributes.get("TAGame.PRI_TA:TotalXP") {
-                    Some(Attribute::Int(total_xp)) => player_data.total_xp = Some(total_xp.clone()),
-                    _ => return,
+                if let Some(Attribute::Int(total_xp)) = attributes.get("TAGame.PRI_TA:TotalXP") {
+                    player_data.total_xp = Some(total_xp.clone());
                 }
             }
             "TAGame.PRI_TA:SteeringSensitivity" => {
-                match attributes.get("TAGame.PRI_TA:SteeringSensitivity") {
-                    Some(Attribute::Float(sens)) => player_data.steering_sensitivity = Some(sens.clone()),
-                    _ => return,
+                if let Some(Attribute::Float(sens)) = attributes.get("TAGame.PRI_TA:SteeringSensitivity") {
+                    player_data.steering_sensitivity = Some(sens.clone());
                 }
             }
             "Engine.PlayerReplicationInfo:bBot" => {
-                match attributes.get("Engine.PlayerReplicationInfo:bBot") {
-                    Some(Attribute::Boolean(bot)) => player_data.is_bot = bot.clone(),
-                    _ => return,
+                if let Some(Attribute::Boolean(bot)) = attributes.get("Engine.PlayerReplicationInfo:bBot") {
+                    player_data.is_bot = bot.clone();
                 }
             }
             "TAGame.PRI_TA:ClientLoadout" => {
-                match attributes.get("TAGame.PRI_TA:ClientLoadout") {
-                    Some(Attribute::Loadout(loadout)) => player_data.loadout.blue = loadout.deref().clone(),
-                    _ => return,
+                if let Some(Attribute::Loadout(loadout)) = attributes.get("TAGame.PRI_TA:ClientLoadout") {
+                    player_data.loadout.blue = loadout.deref().clone();
                 }
             }
             "TAGame.PRI_TA:ClientLoadouts" => {
-                match attributes.get("TAGame.PRI_TA:ClientLoadouts") {
-                    Some(Attribute::TeamLoadout(loadouts)) => {
-                        player_data.loadout.orange = Some(loadouts.orange.clone());
-                        player_data.loadout.blue = loadouts.blue.clone();
-                    }
-                    _ => return,
+                if let Some(Attribute::TeamLoadout(loadouts)) = attributes.get("TAGame.PRI_TA:ClientLoadouts") {
+                    player_data.loadout.orange = Some(loadouts.orange.clone());
+                    player_data.loadout.blue = loadouts.blue.clone();
                 }
             }
             "TAGame.PRI_TA:ClientLoadoutOnline" => {
-                match attributes.get("TAGame.PRI_TA:ClientLoadoutOnline") {
-                    Some(Attribute::LoadoutOnline(paints)) => {
-                        set_paint_values(&mut player_data.loadout_paints.blue,
-                                         &mut player_data.loadout_user_colors.blue, &paints, objects);
-                    }
-                    _ => return,
+                if let Some(Attribute::LoadoutOnline(paints)) = attributes.get("TAGame.PRI_TA:ClientLoadoutOnline") {
+                    set_paint_values(&mut player_data.loadout_paints.blue,
+                                     &mut player_data.loadout_user_colors.blue, &paints, objects);
                 }
             }
             "TAGame.PRI_TA:ClientLoadoutsOnline" => {
-                match attributes.get("TAGame.PRI_TA:ClientLoadoutsOnline") {
-                    Some(Attribute::LoadoutsOnline(team_paints)) => {
-                        set_paint_values(&mut player_data.loadout_paints.blue,
-                                         &mut player_data.loadout_user_colors.blue, &team_paints.blue, objects);
-                        let mut orange_paints = Paints::new();
-                        let mut orange_user_colors = UserColors::new();
-                        set_paint_values(&mut orange_paints, &mut orange_user_colors, &team_paints.blue, objects);
-                        player_data.loadout_paints.orange = Some(orange_paints);
-                        player_data.loadout_user_colors.orange = Some(orange_user_colors);
-                    }
-                    _ => return,
+                if let Some(Attribute::LoadoutsOnline(team_paints)) = attributes.get("TAGame.PRI_TA:ClientLoadoutsOnline") {
+                    set_paint_values(&mut player_data.loadout_paints.blue,
+                                     &mut player_data.loadout_user_colors.blue, &team_paints.blue, objects);
+                    let mut orange_paints = Paints::new();
+                    let mut orange_user_colors = UserColors::new();
+                    set_paint_values(&mut orange_paints, &mut orange_user_colors, &team_paints.blue, objects);
+                    player_data.loadout_paints.orange = Some(orange_paints);
+                    player_data.loadout_user_colors.orange = Some(orange_user_colors);
                 }
             }
             _ => return
@@ -194,33 +151,18 @@ impl ActorHandler for PlayerHandler {
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+        if_chain! {
+            if let Some(attributes) = state.actors.get(&actor_id);
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle");
+            if actor.actor.0 != -1;
+            if let Some(player_actor_id) = state.car_player_map.get(&actor.actor.0);
+            if let Some(player_data) = data.player_data.get_mut(&player_actor_id);
+            then {
+                player_data.ping[state.frame] = None;
+                player_data.ball_cam[state.frame] = None;
+                player_data.time_till_power_up.as_mut().map(|arr| arr[state.frame] = None);
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.ping[state.frame] = None;
-        player_data.ball_cam[state.frame] = None;
-        player_data.time_till_power_up.as_mut().map(|arr| arr[state.frame] = None);
     }
 }
 

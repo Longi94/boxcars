@@ -11,58 +11,30 @@ impl ActorHandler for JumpHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_actor_id = try_opt!(get_cars_player_actor_id(&attributes, state));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
-                match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.jump_active[state.frame] = b.clone(),
-                    _ => return,
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
+                    player_data.jump_active[state.frame] = b.clone()
                 }
             }
-            _ => return,
+            _ => {}
         }
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+        if_chain! {
+            if let Some(attributes) = state.actors.get(&actor_id);
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle");
+            if actor.actor.0 != -1;
+            if let Some(player_actor_id) = state.car_player_map.get(&actor.actor.0);
+            if let Some(player_data) = data.player_data.get_mut(&player_actor_id);
+            then {
+                player_data.jump_active[state.frame] = 0;
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.jump_active[state.frame] = 0;
     }
 }
 
@@ -74,58 +46,30 @@ impl ActorHandler for DoubleJumpHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_actor_id = try_opt!(get_cars_player_actor_id(&attributes, state));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
-                match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.double_jump_active[state.frame] = b.clone(),
-                    _ => return,
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
+                    player_data.double_jump_active[state.frame] = b.clone()
                 }
             }
-            _ => return,
+            _ => {}
         }
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+        if_chain! {
+            if let Some(attributes) = state.actors.get(&actor_id);
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle");
+            if actor.actor.0 != -1;
+            if let Some(player_actor_id) = state.car_player_map.get(&actor.actor.0);
+            if let Some(player_data) = data.player_data.get_mut(&player_actor_id);
+            then {
+                player_data.double_jump_active[state.frame] = 0;
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.double_jump_active[state.frame] = 0;
     }
 }
 
@@ -137,26 +81,13 @@ impl ActorHandler for DodgeHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_actor_id = try_opt!(get_cars_player_actor_id(&attributes, state));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
-                match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => player_data.dodge_active[state.frame] = b.clone(),
-                    _ => return,
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
+                    player_data.dodge_active[state.frame] = b.clone()
                 }
             }
             _ => return,
@@ -164,30 +95,15 @@ impl ActorHandler for DodgeHandler {
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+        if_chain! {
+            if let Some(attributes) = state.actors.get(&actor_id);
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle");
+            if actor.actor.0 != -1;
+            if let Some(player_actor_id) = state.car_player_map.get(&actor.actor.0);
+            if let Some(player_data) = data.player_data.get_mut(&player_actor_id);
+            then {
+                player_data.dodge_active[state.frame] = 0;
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.dodge_active[state.frame] = 0;
     }
 }

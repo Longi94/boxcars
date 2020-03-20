@@ -10,46 +10,36 @@ impl ActorHandler for GameInfoHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
         match updated_attr.as_ref() {
             "ProjectX.GRI_X:GameServerID" => {
-                match attributes.get("ProjectX.GRI_X:GameServerID") {
-                    Some(Attribute::QWord(id)) => data.game_info.server_id = Some(id.clone()),
-                    _ => return,
+                if let Some(Attribute::QWord(id)) = attributes.get("ProjectX.GRI_X:GameServerID") {
+                    data.game_info.server_id = Some(id.clone());
                 }
             }
             "Engine.GameReplicationInfo:ServerName" => {
-                match attributes.get("Engine.GameReplicationInfo:ServerName") {
-                    Some(Attribute::String(name)) => data.game_info.server_name = Some(name.clone()),
-                    _ => return,
+                if let Some(Attribute::String(name)) = attributes.get("Engine.GameReplicationInfo:ServerName") {
+                    data.game_info.server_name = Some(name.clone());
                 }
             }
             "ProjectX.GRI_X:MatchGUID" => {
-                match attributes.get("ProjectX.GRI_X:MatchGUID") {
-                    Some(Attribute::String(guid)) => data.game_info.match_guid = Some(guid.clone()),
-                    _ => return,
+                if let Some(Attribute::String(guid)) = attributes.get("ProjectX.GRI_X:MatchGUID") {
+                    data.game_info.match_guid = Some(guid.clone());
                 }
             }
             "ProjectX.GRI_X:ReplicatedGamePlaylist" => {
-                match attributes.get("ProjectX.GRI_X:ReplicatedGamePlaylist") {
-                    Some(Attribute::Int(playlist)) => data.game_info.playlist = Some(playlist.clone()),
-                    _ => return,
+                if let Some(Attribute::Int(playlist)) = attributes.get("ProjectX.GRI_X:ReplicatedGamePlaylist") {
+                    data.game_info.playlist = Some(playlist.clone());
                 }
             }
             "ProjectX.GRI_X:ReplicatedGameMutatorIndex" => {
-                match attributes.get("ProjectX.GRI_X:ReplicatedGameMutatorIndex") {
-                    Some(Attribute::Int(index)) => data.game_info.mutator_index = index.clone(),
-                    _ => return,
+                if let Some(Attribute::Int(index)) = attributes.get("ProjectX.GRI_X:ReplicatedGameMutatorIndex") {
+                    data.game_info.mutator_index = index.clone();
                 }
             }
             _ => return,
         }
     }
 
-    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {
-    }
+    fn destroy(&self, _data: &mut ParsedFrameData, _state: &mut FrameState, _actor_id: i32) {}
 }

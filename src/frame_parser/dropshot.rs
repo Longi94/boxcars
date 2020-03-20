@@ -24,36 +24,29 @@ impl ActorHandler for PlatformHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
         let dropshot_data = data.dropshot_data.as_mut().unwrap();
         let tile_frames = dropshot_data.tile_frames.get_mut(&self.tile_id).unwrap();
 
+        let attributes = try_opt!(state.actors.get(&actor_id));
         match updated_attr.as_ref() {
             "TAGame.BreakOutActor_Platform_TA:DamageState" => {
-                match attributes.get("TAGame.BreakOutActor_Platform_TA:DamageState") {
-                    Some(Attribute::DamageState(ds)) => {
-                        tile_frames[state.frame] = ds.tile_state;
+                if let Some(Attribute::DamageState(ds)) = attributes.get("TAGame.BreakOutActor_Platform_TA:DamageState") {
+                    tile_frames[state.frame] = ds.tile_state;
 
-                        if state.frame > 0 && tile_frames[state.frame] > tile_frames[state.frame - 1] {
-                            if !dropshot_data.damage_events.contains_key(&state.frame) {
-                                dropshot_data.damage_events.insert(state.frame, DropshotDamageEvent {
-                                    offender: ds.offender.0,
-                                    tiles: Vec::new(),
-                                });
-                            }
-
-                            dropshot_data.damage_events.get_mut(&state.frame).unwrap().tiles.push(DropshotTile {
-                                tile_id: self.tile_id,
-                                state: ds.tile_state,
-                                direct_hit: ds.direct_hit,
-                            })
+                    if state.frame > 0 && tile_frames[state.frame] > tile_frames[state.frame - 1] {
+                        if !dropshot_data.damage_events.contains_key(&state.frame) {
+                            dropshot_data.damage_events.insert(state.frame, DropshotDamageEvent {
+                                offender: ds.offender.0,
+                                tiles: Vec::new(),
+                            });
                         }
+
+                        dropshot_data.damage_events.get_mut(&state.frame).unwrap().tiles.push(DropshotTile {
+                            tile_id: self.tile_id,
+                            state: ds.tile_state,
+                            direct_hit: ds.direct_hit,
+                        })
                     }
-                    _ => return,
                 }
             }
             _ => return,

@@ -1,3 +1,6 @@
+#[macro_use]
+mod macros;
+
 mod ball;
 mod boost;
 mod camera;

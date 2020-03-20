@@ -13,41 +13,23 @@ impl ActorHandler for BoostHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let player_actor_id = match get_cars_player_actor_id(&attributes, state) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let attributes = try_opt!(state.actors.get(&actor_id));
+        let player_actor_id = try_opt!(get_cars_player_actor_id(&attributes, state));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
         match updated_attr.as_ref() {
             "TAGame.CarComponent_TA:ReplicatedActive" => {
-                match attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
-                    Some(Attribute::Byte(b)) => {
-                        let active = b % 2 == 1;
-                        if active && player_data.boost[state.frame - 1].is_some() {
-                            player_data.boost[state.frame] =
-                                Some((player_data.boost[state.frame - 1].unwrap() - state.delta * BOOST_PER_SECOND).max(0.0))
-                        }
-                        player_data.boost_active[state.frame] = active;
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_TA:ReplicatedActive") {
+                    let active = b % 2 == 1;
+                    if active && player_data.boost[state.frame - 1].is_some() {
+                        player_data.boost[state.frame] =
+                            Some((player_data.boost[state.frame - 1].unwrap() - state.delta * BOOST_PER_SECOND).max(0.0))
                     }
-                    _ => return,
+                    player_data.boost_active[state.frame] = active;
                 }
             }
             "TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount" => {
-                match attributes.get("TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount") {
-                    Some(Attribute::Byte(b)) => {
-                        player_data.boost[state.frame] = Some(b.clone() as f32);
-                    }
-                    _ => return,
+                if let Some(Attribute::Byte(b)) = attributes.get("TAGame.CarComponent_Boost_TA:ReplicatedBoostAmount") {
+                    player_data.boost[state.frame] = Some(b.clone() as f32);
                 }
             }
             _ => return,
@@ -55,31 +37,17 @@ impl ActorHandler for BoostHandler {
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
+        if let Some(attributes) = state.actors.get(&actor_id) {
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle") {
+                if actor.actor.0 == -1 {
+                    return;
+                }
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+                let player_actor_id = try_opt!(state.car_player_map.get(&actor.actor.0));
+                let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
+                player_data.boost_active[state.frame] = false;
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.boost_active[state.frame] = false;
     }
 }
 
@@ -90,89 +58,57 @@ impl ActorHandler for BoostPickupHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        let car_actor_id = match updated_attr.as_ref() {
-            "TAGame.VehiclePickup_TA:ReplicatedPickupData" => {
-                match attributes.get("TAGame.VehiclePickup_TA:ReplicatedPickupData") {
-                    Some(Attribute::Pickup(pickup)) => match pickup.instigator {
-                        Some(actor) => actor.0,
-                        _ => return
+        if let Some(attributes) = state.actors.get(&actor_id) {
+            let car_actor_id = match updated_attr.as_ref() {
+                "TAGame.VehiclePickup_TA:ReplicatedPickupData" => {
+                    match attributes.get("TAGame.VehiclePickup_TA:ReplicatedPickupData") {
+                        Some(Attribute::Pickup(pickup)) => try_opt!(pickup.instigator).0,
+                        _ => return,
                     }
-                    _ => return,
                 }
-            }
-            "TAGame.VehiclePickup_TA:NewReplicatedPickupData" => {
-                match attributes.get("TAGame.VehiclePickup_TA:NewReplicatedPickupData") {
-                    Some(Attribute::PickupNew(pickup)) => match pickup.instigator {
-                        Some(actor) => actor.0,
-                        _ => return
+                "TAGame.VehiclePickup_TA:NewReplicatedPickupData" => {
+                    match attributes.get("TAGame.VehiclePickup_TA:NewReplicatedPickupData") {
+                        Some(Attribute::PickupNew(pickup)) => try_opt!(pickup.instigator).0,
+                        _ => return,
                     }
-                    _ => return,
                 }
-            }
-            _ => return,
-        };
-
-        let player_actor_id = match state.actors.get(&car_actor_id) {
-            Some(attributes) => match attributes.get("Engine.Pawn:PlayerReplicationInfo") {
-                Some(Attribute::ActiveActor(actor)) => actor.actor.0,
                 _ => return,
-            },
-            _ => return,
-        };
+            };
 
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
+            if let Some(Attribute::ActiveActor(actor)) = try_opt!(state.actors.get(&car_actor_id)).get("Engine.Pawn:PlayerReplicationInfo") {
+                let player_data = try_opt!(data.player_data.get_mut(&actor.actor.0));
 
-        let current_boost = player_data.boost[state.frame];
+                let current_boost = player_data.boost[state.frame];
 
-        let mut prev_boost: Option<f32> = None;
-        for i in state.frame - 1..0 {
-            if player_data.boost[i].is_some() {
-                prev_boost = player_data.boost[i].clone();
-                break;
+                let mut prev_boost: Option<f32> = None;
+                for i in state.frame - 1..0 {
+                    if player_data.boost[i].is_some() {
+                        prev_boost = player_data.boost[i].clone();
+                        break;
+                    }
+                }
+
+                // Ignore any phantom boosts
+                if prev_boost.is_some() && current_boost.is_some() && prev_boost.unwrap() < 255.0 && current_boost.unwrap() > prev_boost.unwrap() {
+                    player_data.boost_collect[state.frame] = true;
+                }
             }
-        }
-
-        // Ignore any phantom boosts
-        if prev_boost.is_some() && current_boost.is_some() && prev_boost.unwrap() < 255.0 && current_boost.unwrap() > prev_boost.unwrap() {
-            player_data.boost_collect[state.frame] = true;
         }
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
+        if let Some(attributes) = state.actors.get(&actor_id) {
+            if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.CarComponent_TA:Vehicle") {
+                if actor.actor.0 == -1 {
+                    return;
+                }
 
-        let car_actor_id = match attributes.get("TAGame.CarComponent_TA:Vehicle") {
-            Some(Attribute::ActiveActor(actor)) => actor.actor.0,
-            _ => return,
-        };
-
-        if car_actor_id == -1 {
-            return;
+                let player_actor_id = try_opt!(state.car_player_map.get(&actor.actor.0));
+                let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
+                player_data.boost_active[state.frame] = false;
+                player_data.boost[state.frame] = None;
+                player_data.boost_collect[state.frame] = false;
+            }
         }
-
-        let player_actor_id = match state.car_player_map.get(&car_actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
-        player_data.boost_active[state.frame] = false;
-        player_data.boost[state.frame] = None;
-        player_data.boost_collect[state.frame] = false;
     }
 }

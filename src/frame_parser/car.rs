@@ -10,51 +10,38 @@ impl ActorHandler for CarHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32,
               updated_attr: &String, _objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
+        let attributes = try_opt!(state.actors.get(&actor_id));
 
         if updated_attr == "TAGame.Car_TA:ReplicatedDemolish" {
-            match attributes.get("TAGame.Car_TA:ReplicatedDemolish") {
-                Some(Attribute::Demolish(demolish)) => {
-                    if demolish.attacker.0 == -1 || demolish.victim.0 == -1 {
-                        return;
-                    }
-                    let attacker_player_id = match state.car_player_map.get(&demolish.attacker.0) {
-                        Some(id) => id,
-                        _ => return,
-                    };
-                    let victim_player_id = match state.car_player_map.get(&demolish.victim.0) {
-                        Some(id) => id,
-                        _ => return,
-                    };
-
-                    let valid_demo = add_demo(Demolition {
-                        attacker_player_id: attacker_player_id.clone(),
-                        victim_player_id: victim_player_id.clone(),
-                        attack_velocity: demolish.attack_velocity.clone(),
-                        victim_velocity: demolish.victim_velocity.clone(),
-                        frame_number: state.frame.clone(),
-                    }, data);
-
-                    if !valid_demo { return; }
-
-                    if state.should_collect_stats() {
-
-                        // check if the demoed player had an inactive rumble item
-                        data.player_data.get_mut(&victim_player_id).map(|player_data| {
-                            if !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
-                                player_data.rumble_item_events.last_mut().map(|event| {
-                                    if event.frame_use.is_none() {
-                                        event.demoed = true;
-                                    }
-                                });
-                            }
-                        });
-                    }
+            if let Some(Attribute::Demolish(demolish)) = attributes.get("TAGame.Car_TA:ReplicatedDemolish") {
+                if demolish.attacker.0 == -1 || demolish.victim.0 == -1 {
+                    return;
                 }
-                _ => return,
+                let attacker_player_id = try_opt!(state.car_player_map.get(&demolish.attacker.0));
+                let victim_player_id = try_opt!(state.car_player_map.get(&demolish.victim.0));
+                let valid_demo = add_demo(Demolition {
+                    attacker_player_id: attacker_player_id.clone(),
+                    victim_player_id: victim_player_id.clone(),
+                    attack_velocity: demolish.attack_velocity.clone(),
+                    victim_velocity: demolish.victim_velocity.clone(),
+                    frame_number: state.frame.clone(),
+                }, data);
+
+                if !valid_demo { return; }
+
+                if state.should_collect_stats() {
+
+                    // check if the demoed player had an inactive rumble item
+                    data.player_data.get_mut(&victim_player_id).map(|player_data| {
+                        if !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+                            player_data.rumble_item_events.last_mut().map(|event| {
+                                if event.frame_use.is_none() {
+                                    event.demoed = true;
+                                }
+                            });
+                        }
+                    });
+                }
             }
             return;
         }
@@ -63,55 +50,40 @@ impl ActorHandler for CarHandler {
             Some(Attribute::ActiveActor(actor)) => actor.actor.0.clone(),
             _ => return,
         };
-
-        let mut player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
-
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
         state.car_player_map.insert(actor_id, player_actor_id);
 
         match updated_attr.as_ref() {
-            "TAGame.RBActor_TA:ReplicatedRBState" => match attributes.get("TAGame.RBActor_TA:ReplicatedRBState") {
-                Some(Attribute::RigidBody(rigid_body)) =>
-                    player_data.rigid_body.add_rigid_body(state.frame, rigid_body, true),
-                _ => return
-            },
-            "TAGame.Vehicle_TA:ReplicatedThrottle" => match attributes.get("TAGame.Vehicle_TA:ReplicatedThrottle") {
-                Some(Attribute::Byte(byte)) => player_data.throttle[state.frame] = Some(byte.clone()),
-                _ => return
-            }
-            "TAGame.Vehicle_TA:ReplicatedSteer" => match attributes.get("TAGame.Vehicle_TA:ReplicatedSteer") {
-                Some(Attribute::Byte(byte)) => player_data.steer[state.frame] = Some(byte.clone()),
-                _ => return
-            }
-            "TAGame.Vehicle_TA:bReplicatedHandbrake" => match attributes.get("TAGame.Vehicle_TA:bReplicatedHandbrake") {
-                Some(Attribute::Boolean(bool)) => player_data.handbrake[state.frame] = Some(bool.clone()),
-                _ => return
-            }
-            "TAGame.Car_TA:TeamPaint" => match attributes.get("TAGame.Car_TA:TeamPaint") {
-                Some(Attribute::TeamPaint(team_paint)) => {
+            "TAGame.RBActor_TA:ReplicatedRBState" =>
+                if let Some(Attribute::RigidBody(rigid_body)) = attributes.get("TAGame.RBActor_TA:ReplicatedRBState") {
+                    player_data.rigid_body.add_rigid_body(state.frame, rigid_body, true);
+                },
+            "TAGame.Vehicle_TA:ReplicatedThrottle" =>
+                if let Some(Attribute::Byte(byte)) = attributes.get("TAGame.Vehicle_TA:ReplicatedThrottle") {
+                    player_data.throttle[state.frame] = Some(byte.clone());
+                },
+            "TAGame.Vehicle_TA:ReplicatedSteer" =>
+                if let Some(Attribute::Byte(byte)) = attributes.get("TAGame.Vehicle_TA:ReplicatedSteer") {
+                    player_data.steer[state.frame] = Some(byte.clone());
+                }
+            "TAGame.Vehicle_TA:bReplicatedHandbrake" =>
+                if let Some(Attribute::Boolean(bool)) = attributes.get("TAGame.Vehicle_TA:bReplicatedHandbrake") {
+                    player_data.handbrake[state.frame] = Some(bool.clone());
+                }
+            "TAGame.Car_TA:TeamPaint" =>
+                if let Some(Attribute::TeamPaint(team_paint)) = attributes.get("TAGame.Car_TA:TeamPaint") {
                     player_data.primary_color = Some(team_paint.primary_color);
                     player_data.accent_color = Some(team_paint.accent_color);
                     player_data.primary_finish = team_paint.primary_finish;
                     player_data.accent_finish = team_paint.accent_finish;
                 }
-                _ => return,
-            }
             _ => return,
         }
     }
 
     fn destroy(&self, data: &mut ParsedFrameData, state: &mut FrameState, actor_id: i32) {
-        let player_actor_id = match state.car_player_map.get(&actor_id) {
-            Some(id) => id,
-            _ => return
-        };
-
-        let player_data = match data.player_data.get_mut(&player_actor_id) {
-            Some(player_data) => player_data,
-            _ => return,
-        };
+        let player_actor_id = try_opt!(state.car_player_map.get(&actor_id));
+        let player_data = try_opt!(data.player_data.get_mut(&player_actor_id));
 
         player_data.steer[state.frame] = None;
         player_data.throttle[state.frame] = None;

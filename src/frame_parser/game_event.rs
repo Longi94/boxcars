@@ -10,27 +10,20 @@ impl ActorHandler for GameEventHandler {
 
     fn update(&self, data: &mut ParsedFrameData, state: &mut FrameState,
               actor_id: i32, updated_attr: &String, objects: &Vec<String>) {
-        let attributes = match state.actors.get(&actor_id) {
-            Some(attributes) => attributes,
-            _ => return,
-        };
-
-        match updated_attr.as_ref() {
-            "TAGame.GameEvent_Soccar_TA:bOverTime" => {
-                match attributes.get("TAGame.GameEvent_Soccar_TA:bOverTime") {
-                    Some(Attribute::Boolean(b)) => data.frames_data.is_overtime[state.frame] = Some(b.clone()),
-                    _ => return
+        if let Some(attributes) = state.actors.get(&actor_id) {
+            match updated_attr.as_ref() {
+                "TAGame.GameEvent_Soccar_TA:bOverTime" => {
+                    if let Some(Attribute::Boolean(b)) = attributes.get("TAGame.GameEvent_Soccar_TA:bOverTime") {
+                        data.frames_data.is_overtime[state.frame] = Some(b.clone());
+                    }
                 }
-            }
-            "TAGame.GameEvent_Soccar_TA:SecondsRemaining" => {
-                match attributes.get("TAGame.GameEvent_Soccar_TA:SecondsRemaining") {
-                    Some(Attribute::Int(time)) => data.frames_data.seconds_remaining[state.frame] = Some(time.clone()),
-                    _ => return
+                "TAGame.GameEvent_Soccar_TA:SecondsRemaining" => {
+                    if let Some(Attribute::Int(time)) = attributes.get("TAGame.GameEvent_Soccar_TA:SecondsRemaining") {
+                        data.frames_data.seconds_remaining[state.frame] = Some(time.clone());
+                    }
                 }
-            }
-            "TAGame.GameEvent_TA:ReplicatedGameStateTimeRemaining" => {
-                match attributes.get("TAGame.GameEvent_TA:ReplicatedGameStateTimeRemaining") {
-                    Some(Attribute::Int(time)) => {
+                "TAGame.GameEvent_TA:ReplicatedGameStateTimeRemaining" => {
+                    if let Some(Attribute::Int(time)) = attributes.get("TAGame.GameEvent_TA:ReplicatedGameStateTimeRemaining") {
                         data.frames_data.replicated_seconds_remaining[state.frame] = Some(time.clone());
                         if state.frame > 0 && time.clone() == 0 &&
                             data.frames_data.replicated_seconds_remaining[state.frame - 1].unwrap_or(0) == 3 {
@@ -39,12 +32,9 @@ impl ActorHandler for GameEventHandler {
                             state.is_after_goal = false;
                         }
                     }
-                    _ => return
                 }
-            }
-            "TAGame.GameEvent_Soccar_TA:bBallHasBeenHit" => {
-                match attributes.get("TAGame.GameEvent_Soccar_TA:bBallHasBeenHit") {
-                    Some(Attribute::Boolean(b)) => {
+                "TAGame.GameEvent_Soccar_TA:bBallHasBeenHit" => {
+                    if let Some(Attribute::Boolean(b)) = attributes.get("TAGame.GameEvent_Soccar_TA:bBallHasBeenHit") {
                         data.frames_data.ball_has_been_hit[state.frame] = Some(b.clone());
                         if state.frame > 0 && b.clone() &&
                             !data.frames_data.ball_has_been_hit[state.frame - 1].unwrap_or(false) {
@@ -52,18 +42,14 @@ impl ActorHandler for GameEventHandler {
                             state.is_kickoff = false;
                         }
                     }
-                    _ => return
                 }
-            }
-            "TAGame.GameEvent_Soccar_TA:SubRulesArchetype" => {
-                match attributes.get("TAGame.GameEvent_Soccar_TA:SubRulesArchetype") {
-                    Some(Attribute::ActiveActor(actor)) => {
-                        data.game_info.rumble_mutator = Some(objects[actor.actor.0 as usize].clone())
+                "TAGame.GameEvent_Soccar_TA:SubRulesArchetype" => {
+                    if let Some(Attribute::ActiveActor(actor)) = attributes.get("TAGame.GameEvent_Soccar_TA:SubRulesArchetype") {
+                        data.game_info.rumble_mutator = Some(objects[actor.actor.0 as usize].clone());
                     }
-                    _ => return
                 }
+                _ => return
             }
-            _ => return
         }
     }
 
