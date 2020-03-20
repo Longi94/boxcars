@@ -102,14 +102,23 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 
                     // Create new actors, get handlers if any
                     for new_actor in &frame.new_actors {
-                        actors_handlers.remove(&new_actor.actor_id.0)
-                            .map(|handler| handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0));
-
-                        state.actors.insert(new_actor.actor_id.0, HashMap::new());
                         let object_name = match self.objects.get(new_actor.object_id.0 as usize) {
                             None => continue,
                             Some(object_name) => object_name
                         };
+
+                        // Sometimes actors are "recreated" without destroying them first
+                        let same_object = state.actor_objects.get(&new_actor.actor_id.0)
+                            .map(|object| object == object_name)
+                            .unwrap_or(false);
+
+                        actors_handlers.remove(&new_actor.actor_id.0)
+                            .map(|handler| if !same_object {
+                                handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0)
+                            });
+
+                        state.actors.insert(new_actor.actor_id.0, HashMap::new());
+
                         state.actor_objects.insert(new_actor.actor_id.0, object_name.clone());
 
                         let handler = match get_handler(object_name) {
@@ -117,7 +126,9 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                             Some(handler) => handler
                         };
 
-                        handler.create(&mut frames_data, &mut state, new_actor.actor_id.0);
+                        if !same_object {
+                            handler.create(&mut frames_data, &mut state, new_actor.actor_id.0);
+                        }
                         actors_handlers.insert(new_actor.actor_id.0, handler);
                     }
 

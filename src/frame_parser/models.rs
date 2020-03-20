@@ -581,4 +581,6 @@ pub struct RumbleItemEvent {
     pub frame_get: usize,
     pub frame_use: Option<usize>,
     pub item_name: String,
+    #[serde(skip_serializing)]
+    pub demoed: bool,
 }

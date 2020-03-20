@@ -35,11 +35,20 @@ impl ActorHandler for RumbleItemHandler {
 
                 // Rumble item get event
                 if player_data.power_up_active[state.frame - 1].is_none() {
-                    player_data.rumble_item_events.push(RumbleItemEvent {
-                        item_name: self.item_name.clone(),
-                        frame_get: state.frame,
-                        frame_use: None,
-                    })
+                    if player_data.rumble_item_events.last()
+                        .map(|event| event.demoed && self.item_name == event.item_name)
+                        .unwrap_or(false) {
+                        // the user was last demoed, do not create a new event
+                        player_data.rumble_item_events.last_mut()
+                            .map(|mut event| event.demoed = false);
+                    } else {
+                        player_data.rumble_item_events.push(RumbleItemEvent {
+                            item_name: self.item_name.clone(),
+                            frame_get: state.frame,
+                            frame_use: None,
+                            demoed: false,
+                        })
+                    }
                 }
             }
             "TAGame.CarComponent_TA:ReplicatedActive" => {
@@ -53,7 +62,7 @@ impl ActorHandler for RumbleItemHandler {
                             return;
                         }
 
-                        if !player_data.power_up_active[state.frame - 1].unwrap() && active {
+                        if !player_data.power_up_active[state.frame - 1].unwrap_or(false) && active {
                             // Rumble item use event
                             player_data.rumble_item_events.last_mut().map(|mut event|
                                 event.frame_use = Some(state.frame));
@@ -95,10 +104,14 @@ impl ActorHandler for RumbleItemHandler {
         // it just gets deleted immediately
         // Could also happen when the freeze is immediately broken
         // in theory this should not happen with other power ups?
-        if state.should_collect_stats() && self.item_name == "BallFreeze" &&
-            !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
-            player_data.rumble_item_events.last_mut()
-                .map(|mut event| event.frame_use = Some(state.frame));
+        if state.should_collect_stats() {
+            if self.item_name == "BallFreeze" &&
+                !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+                player_data.rumble_item_events.last_mut()
+                    .map(|mut event| event.frame_use = Some(state.frame));
+            }
+        } else {
+            player_data.rumble_item_events.last_mut().map(|mut event| event.demoed = false);
         }
 
         player_data.power_up[state.frame] = None;

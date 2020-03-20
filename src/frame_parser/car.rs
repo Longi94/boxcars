@@ -39,6 +39,20 @@ impl ActorHandler for CarHandler {
                     }, data);
 
                     if !valid_demo { return; }
+
+                    if state.should_collect_stats() {
+
+                        // check if the demoed player had an inactive rumble item
+                        data.player_data.get_mut(&victim_player_id).map(|player_data| {
+                            if !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+                                player_data.rumble_item_events.last_mut().map(|event| {
+                                    if event.frame_use.is_none() {
+                                        event.demoed = true;
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
                 _ => return,
             }
