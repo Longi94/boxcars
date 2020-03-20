@@ -55,10 +55,8 @@ impl ActorHandler for RumbleItemHandler {
 
                         if !player_data.power_up_active[state.frame - 1].unwrap() && active {
                             // Rumble item use event
-                            match player_data.rumble_item_events.last_mut() {
-                                Some(event) => event.frame_use = Some(state.frame),
-                                _ => {}
-                            };
+                            player_data.rumble_item_events.last_mut().map(|mut event|
+                                event.frame_use = Some(state.frame));
                         }
                     }
                     _ => return,
@@ -97,11 +95,10 @@ impl ActorHandler for RumbleItemHandler {
         // it just gets deleted immediately
         // Could also happen when the freeze is immediately broken
         // in theory this should not happen with other power ups?
-        if state.should_collect_stats() && self.item_name == "BallFreeze" && !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
-            match player_data.rumble_item_events.last_mut() {
-                Some(event) => event.frame_use = Some(state.frame),
-                _ => {}
-            };
+        if state.should_collect_stats() && self.item_name == "BallFreeze" &&
+            !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+            player_data.rumble_item_events.last_mut()
+                .map(|mut event| event.frame_use = Some(state.frame));
         }
 
         player_data.power_up[state.frame] = None;

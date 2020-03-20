@@ -37,10 +37,7 @@ impl ParsedFrameData {
         for (_, data) in &mut self.player_data {
             data.new_frame(frame, delta);
         }
-        match &mut self.dropshot_data {
-            Some(data) => data.new_frame(frame),
-            _ => {}
-        }
+        self.dropshot_data.as_mut().map(|data| data.new_frame(frame));
     }
 }
 
@@ -193,23 +190,17 @@ impl RigidBodyFrames {
         self.rot_y[i] = Some(yaw);
         self.rot_z[i] = Some(roll);
 
-        match rb.linear_velocity {
-            Some(v) => {
-                self.vel_x[i] = Some(v.x);
-                self.vel_y[i] = Some(v.y);
-                self.vel_z[i] = Some(v.z);
-            }
-            None => {}
-        }
+        rb.linear_velocity.map(|v| {
+            self.vel_x[i] = Some(v.x);
+            self.vel_y[i] = Some(v.y);
+            self.vel_z[i] = Some(v.z);
+        });
 
-        match rb.angular_velocity {
-            Some(v) => {
-                self.ang_vel_x[i] = Some(v.x);
-                self.ang_vel_y[i] = Some(v.y);
-                self.ang_vel_z[i] = Some(v.z);
-            }
-            None => {}
-        }
+        rb.angular_velocity.map(|v| {
+            self.ang_vel_x[i] = Some(v.x);
+            self.ang_vel_y[i] = Some(v.y);
+            self.ang_vel_z[i] = Some(v.z);
+        });
     }
 
     pub fn new_frame(&mut self, frame: usize) {
@@ -421,10 +412,7 @@ impl PlayerData {
                 self.boost[frame] = self.boost[frame - 1].clone();
             }
 
-            match &mut self.time_till_power_up {
-                Some(arr) => arr[frame] = arr[frame - 1].clone(),
-                None => {}
-            }
+            self.time_till_power_up.as_mut().map(|arr| arr[frame] = arr[frame - 1].clone());
         }
         self.rigid_body.new_frame(frame);
     }

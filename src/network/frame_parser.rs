@@ -94,22 +94,16 @@ impl<'a, 'b> FrameParser<'a, 'b> {
 
                     // Remove deleted actors
                     for deleted in &frame.deleted_actors {
-                        match actors_handlers.remove(&deleted.0) {
-                            Some(handler) => handler.destroy(&mut frames_data, &mut state, deleted.0),
-                            _ => {}
-                        };
+                        actors_handlers.remove(&deleted.0)
+                            .map(|handler| handler.destroy(&mut frames_data, &mut state, deleted.0));
                         state.actors.remove(&deleted.0);
                         state.actor_objects.remove(&deleted.0);
                     }
 
                     // Create new actors, get handlers if any
                     for new_actor in &frame.new_actors {
-                        if actors_handlers.contains_key(&new_actor.actor_id.0) {
-                            match actors_handlers.remove(&new_actor.actor_id.0) {
-                                Some(handler) => handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0),
-                                _ => {}
-                            }
-                        }
+                        actors_handlers.remove(&new_actor.actor_id.0)
+                            .map(|handler| handler.destroy(&mut frames_data, &mut state, new_actor.actor_id.0));
 
                         state.actors.insert(new_actor.actor_id.0, HashMap::new());
                         let object_name = match self.objects.get(new_actor.object_id.0 as usize) {

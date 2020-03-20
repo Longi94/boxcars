@@ -220,10 +220,7 @@ impl ActorHandler for PlayerHandler {
 
         player_data.ping[state.frame] = None;
         player_data.ball_cam[state.frame] = None;
-        match &mut player_data.time_till_power_up {
-            Some(arr) => arr[state.frame] = None,
-            _ => {}
-        }
+        player_data.time_till_power_up.as_mut().map(|arr| arr[state.frame] = None);
     }
 }
 
