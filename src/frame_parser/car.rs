@@ -29,13 +29,16 @@ impl ActorHandler for CarHandler {
                         Some(id) => id,
                         _ => return,
                     };
-                    data.demos.push(Demolition {
+
+                    let valid_demo = add_demo(Demolition {
                         attacker_player_id: attacker_player_id.clone(),
                         victim_player_id: victim_player_id.clone(),
                         attack_velocity: demolish.attack_velocity.clone(),
                         victim_velocity: demolish.victim_velocity.clone(),
                         frame_number: state.frame.clone(),
-                    })
+                    }, data);
+
+                    if !valid_demo { return; }
                 }
                 _ => return,
             }
@@ -101,4 +104,17 @@ impl ActorHandler for CarHandler {
         player_data.handbrake[state.frame] = None;
         player_data.rigid_body.destroy_frame(state.frame);
     }
+}
+
+fn add_demo(demolish: Demolition, data: &mut ParsedFrameData) -> bool {
+    // check for duplicate demos
+    if data.demos.iter().any(|demo| {
+        demo.victim_player_id == demolish.victim_player_id &&
+            demo.attacker_player_id == demolish.attacker_player_id &&
+            demo.attack_velocity == demolish.attack_velocity &&
+            demo.victim_velocity == demolish.victim_velocity
+    }) { return false; }
+
+    data.demos.push(demolish);
+    true
 }
