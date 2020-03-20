@@ -2,8 +2,8 @@ use bitter::BitGet;
 use fnv::FnvHashMap;
 
 use crate::errors::{FrameContext, NetworkError};
-use crate::network::attributes::{AttributeDecoder};
-use crate::network::{VersionTriplet};
+use crate::network::attributes::AttributeDecoder;
+use crate::network::VersionTriplet;
 use std::collections::HashMap;
 use crate::Attribute;
 use crate::frame_parser::models::ParsedFrameData;
@@ -32,17 +32,20 @@ impl<'a, 'b> FrameParser<'a, 'b> {
         state.total_frames = self.frame_decoder.frames_len;
 
         let goal_props = self.header.properties.iter()
-            .find(|&(key,_)| key == "Goals")
-            .and_then(|&(_, ref prop)| prop.as_array())
-            .unwrap();
+            .find(|&(key, _)| key == "Goals")
+            .and_then(|&(_, ref prop)| prop.as_array());
 
-        let goal_frames: Vec<usize> = goal_props.iter()
-            .map(|x| x.iter()
-                .find(|&(key,_)| key == "frame")
-                .and_then(|&(_, ref prop)| prop.as_i32())
-                .unwrap() as usize
-            )
-            .collect();
+        let goal_frames: Vec<usize> = match goal_props {
+            None => Vec::new(),
+            Some(goal_props) => goal_props.iter()
+                .map(|x| x.iter()
+                    .find(|&(key, _)| key == "frame")
+                    .and_then(|&(_, ref prop)| prop.as_i32())
+                    .unwrap() as usize
+                )
+                .collect()
+        };
+
         let mut current_goal: usize = 0;
 
         while !bits.is_empty() && state.frame < self.frame_decoder.frames_len {
