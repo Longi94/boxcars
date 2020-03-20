@@ -89,13 +89,6 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                     state.time = frame.time;
                     frames_data.new_frame(state.frame, frame.time, frame.delta);
 
-                    if state.frame > 0 && current_goal < goal_frames.len() &&
-                        goal_frames[current_goal] == state.frame - 1 {
-                        state.is_after_goal = true;
-                        state.is_kickoff = false;
-                        current_goal += 1;
-                    }
-
                     // Remove deleted actors
                     for deleted in &frame.deleted_actors {
                         match actors_handlers.remove(&deleted.0) {
@@ -162,6 +155,11 @@ impl<'a, 'b> FrameParser<'a, 'b> {
                                        &self.objects);
                     }
 
+                    if current_goal < goal_frames.len() && state.frame == goal_frames[current_goal] {
+                        state.is_after_goal = true;
+                        state.is_kickoff = false;
+                        current_goal += 1;
+                    }
                     state.frame += 1;
                 }
             }

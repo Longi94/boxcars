@@ -590,7 +590,6 @@ pub struct DropshotBallEvent {
 
 #[derive(Debug, Clone, PartialEq, Serialize)]
 pub struct RumbleItemEvent {
-    pub player_actor_id: i32,
     pub frame_get: usize,
     pub frame_use: Option<usize>,
     pub item_name: String,

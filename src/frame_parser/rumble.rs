@@ -39,7 +39,6 @@ impl ActorHandler for RumbleItemHandler {
                         item_name: self.item_name.clone(),
                         frame_get: state.frame,
                         frame_use: None,
-                        player_actor_id,
                     })
                 }
             }
@@ -98,7 +97,7 @@ impl ActorHandler for RumbleItemHandler {
         // it just gets deleted immediately
         // Could also happen when the freeze is immediately broken
         // in theory this should not happen with other power ups?
-        if self.item_name == "BallFreeze" && !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
+        if state.should_collect_stats() && self.item_name == "BallFreeze" && !player_data.power_up_active[state.frame - 1].unwrap_or(true) {
             match player_data.rumble_item_events.last_mut() {
                 Some(event) => event.frame_use = Some(state.frame),
                 _ => {}
